@@ -26,15 +26,11 @@ export const authOptions = {
             throw new Error("🔐 รหัสผ่านไม่ถูกต้อง");
           }
 
-          // ✅ บล็อกเจ้าหน้าที่ ไม่ให้ล็อกอิน
-          if (user.status === "เจ้าหน้าที่") {
-            throw new Error("⛔ เจ้าหน้าที่ไม่สามารถเข้าสู่ระบบนี้ได้");
-          }
-
           return {
             id: user.userID,
             name: user.Name,
             email: user.email,
+            phoneNumber: user.phoneNumber, // ✅ เพิ่มข้อมูลเบอร์โทร
             role: user.status,
           };
         } catch (error) {
@@ -50,6 +46,9 @@ export const authOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
+        token.phoneNumber = user.phoneNumber; // ✅ เก็บเบอร์โทรไว้ใน Token
         token.role = user.role;
       }
       return token;
@@ -57,6 +56,9 @@ export const authOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id;
+        session.user.name = token.name;
+        session.user.email = token.email;
+        session.user.phoneNumber = token.phoneNumber; // ✅ ส่งเบอร์โทรไปให้ session
         session.user.role = token.role;
       }
       return session;

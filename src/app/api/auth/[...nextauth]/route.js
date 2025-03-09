@@ -26,6 +26,11 @@ export const authOptions = {
             throw new Error("🔐 รหัสผ่านไม่ถูกต้อง");
           }
 
+                    // ✅ บล็อกเจ้าหน้าที่ ไม่ให้ล็อกอิน
+                    if (user.status === "เจ้าหน้าที่") {
+                      throw new Error("⛔ เจ้าหน้าที่ไม่สามารถเข้าสู่ระบบนี้ได้");
+                    }
+
           return {
             id: user.userID,
             name: user.Name,

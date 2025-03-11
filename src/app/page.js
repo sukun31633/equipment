@@ -23,7 +23,7 @@ export default function LoginPage() {
     }
 
     const res = await signIn("credentials", {
-      redirect: false, // ❌ ไม่ให้ Redirect
+      redirect: false, 
       userID,
       password,
     });
@@ -31,7 +31,15 @@ export default function LoginPage() {
     if (!res || res.error) {
       setErrorMessage(res.error || "❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
     } else {
-      router.push("/home"); // ✅ ถ้าสำเร็จให้ไปหน้า home
+      // ✅ ตรวจสอบ role ของผู้ใช้
+      const sessionRes = await fetch("/api/auth/session");
+      const sessionData = await sessionRes.json();
+
+      if (sessionData?.user?.role === "เจ้าหน้าที่" || sessionData?.user?.role === "admin") {
+        router.push("/admin/view-borrow");
+      } else {
+        router.push("/home");
+      }
     }
   };
 
@@ -60,13 +68,12 @@ export default function LoginPage() {
           <h2 className="text-2xl font-bold mt-2 text-blue-700">เข้าสู่ระบบ</h2>
         </div>
 
-        {/* ✅ แสดง Popup แจ้งเตือน ถ้าข้อมูลผิดพลาด */}
         {errorMessage && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-lg shadow-md"
+            className="bg-red-600 text-white px-4 py-2 rounded-lg shadow-md text-center mt-4"
           >
             {errorMessage}
           </motion.div>
@@ -76,7 +83,7 @@ export default function LoginPage() {
           <label className="block text-sm font-semibold mb-1 text-gray-700">รหัสผู้ใช้งาน</label>
           <input
             type="text"
-            placeholder="กรอกรหัสนักศึกษา/อาจารย์"
+            placeholder="กรอกรหัสนักศึกษา/อาจารย์/เจ้าหน้าที่"
             value={userID}
             onChange={(e) => setUserID(e.target.value)}
             className="w-full border p-3 rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-gray-50"
@@ -102,10 +109,12 @@ export default function LoginPage() {
             </button>
           </div>
         </div>
+
         <div className="flex justify-between mb-4 text-sm">
           <a href="/contact" className="text-blue-600 hover:underline">ติดต่อแจ้งปัญหา</a>
           <a href="/forgot-password" className="text-blue-600 hover:underline">ลืมรหัสผ่าน?</a>
         </div>
+
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}

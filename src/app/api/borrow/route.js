@@ -1,5 +1,3 @@
-// src/app/api/borrow/route.js
-
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -25,8 +23,8 @@ export async function POST(req) {
         const equipmentID = formData.get("equipmentID"); // รหัสอุปกรณ์
         const dueDate = formData.get("dueDate");
         const courseCode = formData.get("courseCode");
-        const usageReason = formData.get("usageReason");
-        const documentFile = formData.get("document"); // 📝 รับไฟล์เอกสาร
+        const usageReason = formData.get("usageReason");  // เพิ่มการรับข้อมูลหมายเหตุ
+        const documentFile = formData.get("document");    // 📝 รับไฟล์เอกสาร
         const status = formData.get("status") || "Pending";  // ค่า default เป็น Pending
 
         // ✅ ใช้วันที่ปัจจุบัน (current date) สำหรับ borrowDate
@@ -41,9 +39,9 @@ export async function POST(req) {
 
         // ✅ บันทึกข้อมูลลงในฐานข้อมูล
         const [result] = await pool.query(
-            `INSERT INTO borrowing (borrowerName, userID, equipmentID, borrowDate, dueDate, status) 
-            VALUES (?, ?, ?, ?, ?, ?)`,
-            [borrowerName, userID, equipmentID, borrowDate, dueDate, status]
+            `INSERT INTO borrowing (borrowerName, userID, equipmentID, borrowDate, dueDate, status, usageReason, document) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [borrowerName, userID, equipmentID, borrowDate, dueDate, status, usageReason, documentFile ? documentFile.name : null]
         );
 
         // ส่งข้อมูลการยืมและชื่ออุปกรณ์กลับ

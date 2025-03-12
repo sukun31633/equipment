@@ -7,10 +7,10 @@ import { ArrowLeft } from "lucide-react";
 export default function BorrowEquipmentPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const equipmentNameFromURL = searchParams.get("name") || "ไม่ระบุ";  // ตรวจสอบจาก URL
-  const [equipmentName, setEquipmentName] = useState(equipmentNameFromURL);  // ตั้งค่าเริ่มต้นจาก URL
-
-  const [equipmentID, setEquipmentID] = useState("");
+  
+  const equipmentID = searchParams.get("id"); // รับ `id` จาก URL
+  const [equipmentName, setEquipmentName] = useState("กำลังโหลด...");
+  
   const [borrowDate, setBorrowDate] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [courseCode, setCourseCode] = useState("");
@@ -18,30 +18,31 @@ export default function BorrowEquipmentPage() {
   const [documentFile, setDocumentFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ตั้งค่า borrowDate เป็นวันที่ปัจจุบัน
+  // ใช้ useEffect เพื่อดึงข้อมูลชื่ออุปกรณ์จาก API
+  useEffect(() => {
+    if (equipmentID) {
+      const fetchEquipment = async () => {
+        try {
+          const res = await fetch(`/api/view-equipment?id=${equipmentID}`);
+          const data = await res.json();
+          if (data.success && data.data.length > 0) {
+            setEquipmentName(data.data[0].name);  // ตั้งชื่ออุปกรณ์จาก API
+          } else {
+            setEquipmentName("ไม่พบข้อมูลอุปกรณ์");
+          }
+        } catch (error) {
+          console.error("เกิดข้อผิดพลาดในการเชื่อมต่อ API", error);
+          setEquipmentName("ไม่พบข้อมูลอุปกรณ์");
+        }
+      };
+      fetchEquipment();
+    }
+  }, [equipmentID]);
+
+  // กำหนดวันที่ปัจจุบันให้กับวันที่ยืม
   useEffect(() => {
     setBorrowDate(new Date().toISOString().split("T")[0]);
-
-    // ดึง equipmentID จาก API (ใช้ equipmentName ค้นหา)
-    async function fetchEquipmentID() {
-      try {
-        const res = await fetch(`/api/equipment?id=${encodeURIComponent(equipmentNameFromURL)}`);
-        const data = await res.json();
-        if (data.success && data.data.length > 0) {
-          setEquipmentID(data.data[0].id);  // ตั้งค่า equipmentID จากข้อมูลที่ได้
-          setEquipmentName(data.data[0].name);  // ตั้งค่า equipmentName จากข้อมูลที่ได้
-        } else {
-          alert("⚠️ ไม่พบอุปกรณ์นี้ในระบบ");
-        }
-      } catch (error) {
-        console.error("❌ เกิดข้อผิดพลาด:", error);
-      }
-    }
-
-    if (equipmentNameFromURL !== "ไม่ระบุ") {
-      fetchEquipmentID();
-    }
-  }, [equipmentNameFromURL]);  // ทำงานใหม่ทุกครั้งที่ equipmentName เปลี่ยน
+  }, []);
 
   const handleSubmit = async () => {
     if (!equipmentID) {
@@ -73,13 +74,13 @@ export default function BorrowEquipmentPage() {
 
       const result = await response.json();
       if (result.success) {
-        alert("✅ บันทึกข้อมูลการยืมสำเร็จ");
+        alert("✅ การยืมอุปกรณ์สำเร็จ!");
         router.push("/borrowed-equipment");
       } else {
         alert("❌ เกิดข้อผิดพลาด: " + result.message);
       }
     } catch (error) {
-      console.error("❌ เกิดข้อผิดพลาด:", error);
+      console.error("เกิดข้อผิดพลาด:", error);
       alert("❌ ไม่สามารถบันทึกข้อมูลได้");
     } finally {
       setLoading(false);

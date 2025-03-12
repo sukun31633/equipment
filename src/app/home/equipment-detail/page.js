@@ -9,40 +9,40 @@ import { motion } from "framer-motion";
 export default function EquipmentDetailPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const equipmentName = searchParams.get("name");
+    const equipmentID = searchParams.get("id");  // ✅ ดึง ID จาก URL
 
     const [equipment, setEquipment] = useState(null);
 
     useEffect(() => {
         const fetchEquipment = async () => {
             try {
-                const res = await fetch(`/api/view-equipment?name=${encodeURIComponent(equipmentName)}`);
+                const res = await fetch(`/api/view-equipment?id=${encodeURIComponent(equipmentID)}`);
                 const data = await res.json();
                 if (data.success && data.data.length > 0) {
                     setEquipment(data.data[0]);
                 } else {
-                    console.error("ไม่พบข้อมูลอุปกรณ์");
+                    console.error("❌ ไม่พบข้อมูลอุปกรณ์");
                 }
             } catch (error) {
-                console.error("เกิดข้อผิดพลาดในการเชื่อมต่อ API", error);
+                console.error("❌ เกิดข้อผิดพลาดในการเชื่อมต่อ API", error);
             }
         };
 
-        if (equipmentName) {
+        if (equipmentID) {
             fetchEquipment();
         }
-    }, [equipmentName]);
+    }, [equipmentID]);
 
     const handleBack = () => {
         router.back();
     };
 
     const goToBorrowEquipment = () => {
-        router.push(`/home/borrow-equipment?name=${encodeURIComponent(equipment.name)}`);
+        router.push(`/home/borrow-equipment?id=${equipment.id}`);  // ✅ ส่ง id แทน name
     };
 
     const goToReserveEquipment = () => {
-        router.push(`/home/reserve-equipment?name=${encodeURIComponent(equipment.name)}`);
+        router.push(`/home/reserve-equipment?id=${equipment.id}`);  // ✅ ส่ง id แทน name
     };
 
     if (!equipment) {

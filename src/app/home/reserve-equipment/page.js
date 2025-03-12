@@ -7,8 +7,10 @@ import { ArrowLeft } from "lucide-react";
 export default function ReserveEquipmentPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [equipmentName, setEquipmentName] = useState("กำลังโหลด...");
   
+  const [equipmentName, setEquipmentName] = useState("กำลังโหลด...");
+  const equipmentID = searchParams.get("id");
+
   // ✅ เก็บค่าฟอร์มใน state
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -18,11 +20,24 @@ export default function ReserveEquipmentPage() {
   const [file, setFile] = useState(null);
 
   useEffect(() => {
-    if (searchParams) {
-      const name = searchParams.get("name") || "ไม่ระบุ";
-      setEquipmentName(name);
+    if (equipmentID) {
+      // 🛠 ดึงข้อมูลชื่ออุปกรณ์จาก API ด้วย id
+      const fetchEquipment = async () => {
+        try {
+          const res = await fetch(`/api/view-equipment?id=${equipmentID}`);
+          const data = await res.json();
+          if (data.success && data.data.length > 0) {
+            setEquipmentName(data.data[0].name); // ตั้งชื่ออุปกรณ์
+          } else {
+            setEquipmentName("ไม่พบข้อมูลอุปกรณ์");
+          }
+        } catch (error) {
+          console.error("เกิดข้อผิดพลาดในการเชื่อมต่อ API", error);
+        }
+      };
+      fetchEquipment();
     }
-  }, [searchParams]);
+  }, [equipmentID]);
 
   const handleBack = () => {
     router.back();
@@ -34,23 +49,26 @@ export default function ReserveEquipmentPage() {
       alert("⚠️ กรุณากรอกข้อมูลให้ครบถ้วน");
       return;
     }
-
+  
+    // รวม startDate และ reserveTime เข้าด้วยกัน
+    const fullStartDate = `${startDate} ${reserveTime}`;
+  
     const formData = new FormData();
     formData.append("reserverName", "ชื่อผู้จอง (ดึงจาก session)");
     formData.append("userID", "userID (ดึงจาก session)");
     formData.append("reservedEquipments", equipmentName);
-    formData.append("startDate", startDate);
+    formData.append("startDate", fullStartDate); // ใช้ fullStartDate แทน startDate เดิม
     formData.append("endDate", endDate);
     formData.append("courseCode", courseCode);
     formData.append("usageReason", usageReason);
     if (file) formData.append("document", file);
-
+  
     try {
       const res = await fetch("/api/reservation", {
         method: "POST",
         body: formData,
       });
-
+  
       const data = await res.json();
       if (data.success) {
         alert("✅ การจองสำเร็จ!");
@@ -63,6 +81,9 @@ export default function ReserveEquipmentPage() {
       alert("❌ เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
     }
   };
+  
+  
+  
 
   return (
     <div className="p-8 pt-16 min-h-screen bg-gradient-to-br from-blue-500 to-blue-300 flex flex-col items-center w-full relative">

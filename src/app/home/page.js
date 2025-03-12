@@ -35,8 +35,9 @@ export default function HomePage() {
     console.log("ค้นหาชื่ออุปกรณ์:", searchTerm);
   };
 
-  const goToEquipmentDetail = (equipmentName) => {
-    router.push(`/home/equipment-detail?name=${encodeURIComponent(equipmentName)}`);
+  // ✅ เปลี่ยนจากใช้ name -> id
+  const goToEquipmentDetail = (equipmentID) => {
+    router.push(`/home/equipment-detail?id=${encodeURIComponent(equipmentID)}`);
   };
 
   const filterEquipment = (equipment) =>
@@ -94,7 +95,7 @@ export default function HomePage() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="bg-white p-6 shadow-2xl rounded-xl cursor-pointer hover:shadow-3xl transition flex flex-col items-center w-full max-w-[450px]"
-                  onClick={() => goToEquipmentDetail(equipment.name)}
+                  onClick={() => goToEquipmentDetail(equipment.id)}  // ✅ เปลี่ยนจาก name เป็น id
                 >
                   <div className="w-full h-60 overflow-hidden rounded-lg shadow-md flex items-center justify-center">
                     <motion.img
@@ -110,7 +111,7 @@ export default function HomePage() {
                   <p className="text-lg text-center mt-3 font-semibold text-gray-800 tracking-wide capitalize min-h-[50px] flex items-center justify-center">
                     {equipment.name || "ไม่มีชื่ออุปกรณ์"}
                     <br/>
-                    รหัสอุปกรณ์:{equipment.equipment_code || "ไม่มีรหัสสินค้า"}
+                    รหัสอุปกรณ์: {equipment.equipment_code || "ไม่มีรหัสสินค้า"}
                   </p>
                 </motion.div>
               ))}

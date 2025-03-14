@@ -1,3 +1,5 @@
+import fs from "fs/promises";  // สำหรับการจัดการไฟล์
+import path from "path";  // ใช้สำหรับการตั้งค่าที่อยู่ของไฟล์
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -22,7 +24,7 @@ export async function POST(req) {
         // ✅ ดึงข้อมูลจากฟอร์ม
         const equipmentID = formData.get("equipmentID"); // รหัสอุปกรณ์
         const dueDate = formData.get("dueDate");
-        const courseCode = formData.get("courseCode");
+        const courseCode = formData.get("courseCode");  // ✅ เพิ่มรหัสวิชา
         const usageReason = formData.get("usageReason");  // เพิ่มการรับข้อมูลหมายเหตุ
         const documentFile = formData.get("document");    // 📝 รับไฟล์เอกสาร
         const status = formData.get("status") || "Pending";  // ค่า default เป็น Pending
@@ -37,11 +39,27 @@ export async function POST(req) {
             return NextResponse.json({ success: false, message: "❌ ไม่พบอุปกรณ์ในระบบ" }, { status: 400 });
         }
 
-        // ✅ บันทึกข้อมูลลงในฐานข้อมูล
+        // ✅ การจัดการไฟล์เอกสาร
+        let documentPath = null;
+        if (documentFile && documentFile.name) {
+            // สร้างโฟลเดอร์ upload ถ้ายังไม่มี
+            const uploadDir = path.join(process.cwd(), "public/uploads");
+            await fs.mkdir(uploadDir, { recursive: true });
+
+            // สร้างชื่อไฟล์ใหม่เพื่อหลีกเลี่ยงปัญหาการซ้ำชื่อ
+            const fileName = Date.now() + "_" + documentFile.name;
+            documentPath = `/uploads/${fileName}`;
+
+            // บันทึกไฟล์ลงโฟลเดอร์
+            const buffer = await documentFile.arrayBuffer();
+            await fs.writeFile(path.join(uploadDir, fileName), Buffer.from(buffer));
+        }
+
+        // ✅ บันทึกข้อมูลลงในฐานข้อมูล (เพิ่ม `courseCode`)
         const [result] = await pool.query(
-            `INSERT INTO borrowing (borrowerName, userID, equipmentID, borrowDate, dueDate, status, usageReason, document) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [borrowerName, userID, equipmentID, borrowDate, dueDate, status, usageReason, documentFile ? documentFile.name : null]
+            `INSERT INTO borrowing (borrowerName, userID, equipmentID, borrowDate, dueDate, courseCode, status, usageReason, document) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [borrowerName, userID, equipmentID, borrowDate, dueDate, courseCode, status, usageReason, documentPath]  // ✅ เก็บค่า courseCode
         );
 
         // ส่งข้อมูลการยืมและชื่ออุปกรณ์กลับ

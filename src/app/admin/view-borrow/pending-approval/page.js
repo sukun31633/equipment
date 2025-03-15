@@ -160,7 +160,7 @@ export default function PendingApprovalPage() {
           <p className="text-gray-800">👤 ผู้จอง: {item.reserverName}</p>
           <p className="text-gray-800">📚 รหัสวิชา: {item.courseCode || "ไม่มีข้อมูล"}</p>
           <p className="text-gray-800">📜 รายละเอียด: {item.description || "ไม่มีข้อมูล"}</p>
-          <p className="text-gray-800">📅 วันจอง: {dayjs(item.startDate).format("DD-MM-YYYY")}</p>
+          <p className="text-gray-800">📅 วันจอง: {dayjs(item.startDate).format("DD-MM-YYYY HH:mm")}</p>
           <p className="text-gray-800">📅 วันคืน: {dayjs(item.endDate).format("DD-MM-YYYY")}</p>
           <p className="text-gray-800">⚠ หมายเหตุ: {item.usageReason || "ไม่มี"}</p>
           <p className="text-gray-800">📍 ที่เก็บอุปกรณ์: {item.location || "ไม่ระบุ"}</p>

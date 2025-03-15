@@ -42,6 +42,29 @@ export default function PendingApprovalPage() {
     fetchRequests();
   }, []);
 
+  const updateStatus = async (id, type, action) => {
+    if (!confirm(`คุณต้องการ${action === "approve" ? "อนุมัติ" : "ปฏิเสธ"} รายการนี้หรือไม่?`)) return;
+
+    try {
+      const res = await fetch("/api/update-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, type, action }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        window.location.reload();
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error("❌ เกิดข้อผิดพลาด:", error);
+      alert("❌ ไม่สามารถอัปเดตสถานะได้");
+    }
+  };
+
   const filteredBorrowRequests = borrowRequests.filter(
     (item) =>
       item.borrowerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -121,13 +144,13 @@ export default function PendingApprovalPage() {
               </div>
 
               {/* 🔹 ปุ่มอนุมัติ */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-green-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-green-600 transition"
-                onClick={() => alert(`อนุมัติการยืม: ${item.equipmentName}`)}
-              >
+              <motion.button className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
+                onClick={() => updateStatus(item.borrowID, "borrow", "approve")}>
                 ✅ อนุมัติ
+              </motion.button>
+              <motion.button className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition ml-2"
+                onClick={() => updateStatus(item.borrowID, "borrow", "reject")}>
+                ❌ ปฏิเสธ
               </motion.button>
             </motion.div>
           ))
@@ -177,15 +200,16 @@ export default function PendingApprovalPage() {
           )}
         </div>
 
-        {/* 🔹 ปุ่มอนุมัติ */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="bg-green-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-green-600 transition"
-          onClick={() => alert(`อนุมัติการจอง: ${item.equipmentName}`)}
-        >
-          ✅ อนุมัติ
+
+        <motion.button className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
+                onClick={() => updateStatus(item.reservationID, "reservation", "approve")}>
+                ✅ อนุมัติ
+              </motion.button>
+              <motion.button className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition ml-2"
+                onClick={() => updateStatus(item.reservationID, "reservation", "reject")}>
+                ❌ ปฏิเสธ
         </motion.button>
+              
       </motion.div>
     ))
   ) : (

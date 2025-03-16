@@ -148,7 +148,7 @@ export default function PendingApprovalPage() {
                 onClick={() => updateStatus(item.borrowID, "borrow", "approve")}>
                 ✅ อนุมัติ
               </motion.button>
-              <motion.button className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition ml-2"
+              <motion.button className="bg-red-400 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition ml-2"
                 onClick={() => updateStatus(item.borrowID, "borrow", "reject")}>
                 ❌ ปฏิเสธ
               </motion.button>
@@ -205,7 +205,7 @@ export default function PendingApprovalPage() {
                 onClick={() => updateStatus(item.reservationID, "reservation", "approve")}>
                 ✅ อนุมัติ
               </motion.button>
-              <motion.button className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition ml-2"
+              <motion.button className="bg-red-400 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition ml-2"
                 onClick={() => updateStatus(item.reservationID, "reservation", "reject")}>
                 ❌ ปฏิเสธ
         </motion.button>

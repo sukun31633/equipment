@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";  // ✅ เพิ่ม useRouter
 import { Search, Trash2, Edit } from "lucide-react";
 import AdminNavigationBar from "@/app/components/AdminNavigationBar";
 
 export default function EquipmentListPage() {
+  const router = useRouter();  // ✅ ใช้งาน useRouter
   const [searchTerm, setSearchTerm] = useState("");
   const [equipmentList, setEquipmentList] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchEquipment = async () => {
@@ -21,43 +24,50 @@ export default function EquipmentListPage() {
         }
       } catch (error) {
         console.error("⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ API", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchEquipment();
   }, []);
 
-  const handleSearch = () => {
-    console.log("🔍 ค้นหาชื่ออุปกรณ์:", searchTerm);
+  const handleEdit = (id) => {
+    router.push(`/admin/view-equipment/edit-equipment?id=${id}`);  // ✅ ใช้ router.push()
   };
 
   const handleDelete = async (id) => {
     if (confirm("⚠️ คุณต้องการลบอุปกรณ์นี้หรือไม่?")) {
-      try {
-        const res = await fetch(`/api/delete-equipment?id=${id}`, {
-          method: "DELETE",
-        });
-        const data = await res.json();
-        if (data.success) {
-          alert("✅ ลบข้อมูลอุปกรณ์สำเร็จ");
-          setEquipmentList((prev) => prev.filter((item) => item.id !== id));
-        } else {
-          alert("⚠️ เกิดข้อผิดพลาดในการลบข้อมูล");
-        }
-      } catch (error) {
-        console.error("⚠️ เกิดข้อผิดพลาด:", error);
-        alert("⚠️ เกิดข้อผิดพลาดในการลบข้อมูล");
-      }
-    }
-  };
+        try {
+            const res = await fetch(`/api/delete-equipment?id=${id}`, {
+                method: "DELETE",
+            });
 
-  const handleEdit = (id) => {
-    window.location.href = `/home/edit-equipment?id=${id}`;
-  };
+            if (!res.ok) {
+                const errorData = await res.json();
+                alert(errorData.message || "⚠️ เกิดข้อผิดพลาดในการลบข้อมูล");
+                return;
+            }
+
+            const data = await res.json();
+            if (data.success) {
+                alert("✅ ลบข้อมูลอุปกรณ์สำเร็จ");
+                setEquipmentList((prev) => prev.filter((item) => item.id !== id));
+            }
+        } catch (error) {
+            console.error("⚠️ เกิดข้อผิดพลาด:", error);
+            alert("❌ ไม่สามารถลบข้อมูลได้");
+        }
+    }
+};
 
   const filteredEquipment = equipmentList.filter((item) =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleSearch = () => {
+    console.log("🔍 ค้นหาชื่ออุปกรณ์:", searchTerm);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 flex flex-col items-center p-6 pb-24">
@@ -84,7 +94,9 @@ export default function EquipmentListPage() {
 
       {/* 🔹 อุปกรณ์ทั้งหมด */}
       <div className="w-full max-w-4xl space-y-4">
-        {filteredEquipment.length > 0 ? (
+        {loading ? (
+          <p className="text-center text-gray-600">⏳ กำลังโหลดข้อมูล...</p>
+        ) : filteredEquipment.length > 0 ? (
           filteredEquipment.map((equipment) => (
             <div
               key={equipment.id}
@@ -106,6 +118,7 @@ export default function EquipmentListPage() {
                 <p className="text-gray-800">📂 หมวดหมู่: {equipment.category}</p>
                 <p className="text-gray-800">📦 รหัสอุปกรณ์: {equipment.equipment_code}</p>
                 <p className="text-gray-800">📍 ที่เก็บ: {equipment.location}</p>
+                <p className="text-gray-800">📜 รายละเอียด: {equipment.description}</p>
               </div>
 
               {/* ปุ่มลบ & แก้ไข */}

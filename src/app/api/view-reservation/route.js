@@ -13,6 +13,7 @@ export async function GET(req) {
             FROM reservation r
             JOIN equipment e ON r.equipmentID = e.id
             WHERE r.status = 'Pending'
+            ORDER BY r.reservationID DESC
         `);
 
         if (result.length === 0) {

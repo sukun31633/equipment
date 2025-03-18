@@ -1,22 +1,45 @@
 "use client";
 
-import { useState } from "react";
-import { Search, ArrowLeft, Users } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, ArrowLeft, Users, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-const staffData = [
-  { name: "จงจิต แซ่ลิ้ม", phone: "081-234-5678", id: "ST001" },
-  { name: "โมสาธ แซ่ตั้ง", phone: "089-876-5432", id: "ST002" },
-  { name: "เจนนิเฟอร์ แซ่ลี่", phone: "082-345-6789", id: "ST003" },
-  { name: "อ่วม เจริญจิง", phone: "087-654-3210", id: "ST004" }
-];
 
 export default function ViewStaffPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [staffList, setStaffList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showPasswords, setShowPasswords] = useState({}); // สำหรับซ่อน/แสดงรหัสผ่าน
   const router = useRouter();
 
-  const filteredStaff = staffData.filter((staff) =>
-    staff.name.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    fetchStaff();
+  }, []);
+
+  const fetchStaff = async () => {
+    try {
+      const res = await fetch(`/api/view-users?type=เจ้าหน้าที่`);
+      const data = await res.json();
+      if (data.success) {
+        setStaffList(data.data);
+      } else {
+        console.error("⚠️ เกิดข้อผิดพลาดในการดึงข้อมูลเจ้าหน้าที่");
+      }
+    } catch (error) {
+      console.error("⚠️ Error fetching staff:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const togglePasswordVisibility = (id) => {
+    setShowPasswords((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const filteredStaff = staffList.filter((staff) =>
+    staff.Name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleBack = () => {
@@ -62,19 +85,44 @@ export default function ViewStaffPage() {
 
       {/* 🔹 Staff List */}
       <div className="w-full max-w-4xl space-y-4">
-        {filteredStaff.length > 0 ? (
+        {loading ? (
+          <p className="text-gray-600 text-center">⏳ กำลังโหลดข้อมูล...</p>
+        ) : filteredStaff.length > 0 ? (
           filteredStaff.map((staff) => (
-            <div key={staff.id} className="bg-white p-6 shadow-md rounded-lg flex justify-between items-center hover:shadow-xl transition">
+            <div key={staff.userID} className="bg-white p-6 shadow-md rounded-lg flex justify-between items-center hover:shadow-xl transition">
               <div>
-                <p className="font-bold text-lg text-gray-800">📌 {staff.name}</p>
-                <p className="text-gray-600">📞 {staff.phone}</p>
-                <p className="text-gray-600">🆔 {staff.id}</p>
+                <p className="font-bold text-lg text-gray-800">📌 {staff.Name}</p>
+                <p className="text-gray-600">📞 {staff.phoneNumber}</p>
+                <p className="text-gray-600">📧 {staff.email}</p>
+                <p className="text-gray-600">🆔 {staff.userID}</p>
+                <p className="text-gray-600">📌 สถานะ: {staff.status}</p>
+                
+                {/* 🔑 แสดงรหัสผ่าน */}
+                <div className="flex items-center space-x-2 mt-2">
+                  <p className="text-gray-600">🔑 รหัสผ่าน:</p>
+                  <span className="text-gray-800 font-mono bg-gray-200 px-2 py-1 rounded">
+                    {showPasswords[staff.userID] ? staff.password : "••••••••"}
+                  </span>
+                  <button
+                    onClick={() => togglePasswordVisibility(staff.userID)}
+                    className="text-blue-500 hover:text-blue-700 transition"
+                  >
+                    {showPasswords[staff.userID] ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
-              <button 
-                className="bg-yellow-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-yellow-600 transition"
-              >
-                ✏️ แก้ไข
-              </button>
+              <div className="flex space-x-2">
+                <button 
+                  className="bg-yellow-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-yellow-600 transition"
+                >
+                  ✏️ แก้ไข
+                </button>
+                <button 
+                  className="bg-red-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-red-600 transition"
+                >
+                  🗑️ ลบ
+                </button>
+              </div>
             </div>
           ))
         ) : (

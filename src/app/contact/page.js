@@ -37,7 +37,7 @@ export default function ContactUsPage() {
             className="flex items-center border p-3 rounded-lg mb-3 border-gray-300 bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 transition shadow-lg"
           >
             <Phone className="text-white mr-3" size={24} />
-            <span className="text-white font-medium">เบอร์โทรศัพท์: 02-123-4567</span>
+            <span className="text-white font-medium">เบอร์โทรศัพท์: 02-312-6300 ต่อ 1219</span>
           </motion.a>
           
           {/* ปุ่มส่งอีเมล */}
@@ -47,7 +47,7 @@ export default function ContactUsPage() {
             className="flex items-center border p-3 rounded-lg border-gray-300 bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 transition shadow-lg"
           >
             <Mail className="text-white mr-3" size={24} />
-            <span className="text-white font-medium">อีเมล์: support@university.ac.th</span>
+            <span className="text-white font-medium">อีเมล์: apichart.pai@hcu.ac.th</span>
           </motion.a>
           
         </div>

@@ -12,6 +12,7 @@ export async function GET(req) {
             FROM borrowing b
             JOIN equipment e ON b.equipmentID = e.id
             WHERE b.status = 'Pending'
+            ORDER BY b.borrowID DESC
         `);
 
         if (result.length === 0) {

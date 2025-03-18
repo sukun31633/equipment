@@ -63,9 +63,9 @@ export default function AddEquipmentPage() {
             {/* 🔹 Form Section */}
             <div className="w-full max-w-4xl bg-white p-6 shadow-md rounded-lg">
                 {[
-                    { label: "📌 ชื่ออุปกรณ์", value: equipmentName, setValue: setEquipmentName },
+                    { label: "📌 ชื่ออุปกรณ์ (ภาษาไทย)", value: equipmentName, setValue: setEquipmentName },
                     { label: "🆔 รหัสอุปกรณ์", value: equipmentCode, setValue: setEquipmentCode }, // ✅ เพิ่มรหัสอุปกรณ์
-                    { label: "🏷️ ชื่อยี่ห้อ", value: brand, setValue: setBrand },
+                    { label: "🏷️ ชื่อยี่ห้อและรุ่น", value: brand, setValue: setBrand },
                     { label: "📍 ที่เก็บอุปกรณ์", value: storageLocation, setValue: setStorageLocation },
                     { label: "📝 รายละเอียดอุปกรณ์", value: description, setValue: setDescription },
                 ].map(({ label, value, setValue }) => (

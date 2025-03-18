@@ -1,50 +1,75 @@
 "use client";
 
-import { useState } from 'react';
-import { Search, ArrowLeft, Users } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { Search, ArrowLeft, Users, Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function ViewStudentPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [studentList, setStudentList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showPasswords, setShowPasswords] = useState({}); // สำหรับซ่อน/แสดงรหัสผ่าน
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState('');
 
-  // ตัวอย่างข้อมูลนักศึกษา
-  const mockStudents = [
-    { id: 1, firstName: "ไมเคิล", lastName: "ใจดี", phone: "081-234-5678", studentId: "652222" },
-    { id: 2, firstName: "สุกัลป์", lastName: "สวยงาม", phone: "081-987-6543", studentId: "664231" },
-    { id: 3, firstName: "เมธี", lastName: "จริงใจ", phone: "082-345-6789", studentId: "667789" },
-    { id: 4, firstName: "เสฉวน", lastName: "สมหวัง", phone: "089-876-5432", studentId: "653333" }
-  ];
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  const fetchStudents = async () => {
+    try {
+      const res = await fetch("/api/view-users?type=นักศึกษา");
+      const data = await res.json();
+      if (data.success) {
+        setStudentList(data.data);
+      } else {
+        console.error("⚠️ เกิดข้อผิดพลาดในการดึงข้อมูลนักศึกษา");
+      }
+    } catch (error) {
+      console.error("⚠️ Error fetching students:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ฟิลเตอร์ข้อมูลนักศึกษา
-  const filteredStudents = mockStudents.filter((student) =>
-    student.studentId.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredStudents = studentList.filter((student) =>
+    student.studentId && student.studentId.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // นำทางไปหน้าต่างๆ
+  const handleBack = () => {
+    router.push("/admin/view-borrow");
+  };
+
   const navigateToPage = (page) => {
     router.push(`/admin/add-user/${page}`);
   };
 
+  const togglePasswordVisibility = (id) => {
+    setShowPasswords((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-6 pb-24 flex flex-col items-center">
-      {/* Header Section */}
+      {/* 🔹 Header Section */}
       <div className="w-full max-w-4xl bg-white p-4 shadow-lg flex items-center justify-between rounded-lg mb-6">
         <div className="flex items-center">
-          <button onClick={() => router.push('/admin/view-borrow')} className="text-blue-500 hover:text-blue-700 transition">
+          <button onClick={handleBack} className="text-blue-500 hover:text-blue-700 transition">
             <ArrowLeft size={26} />
           </button>
           <h2 className="text-xl font-semibold text-gray-800 ml-4">🎓 ข้อมูลนักศึกษา</h2>
         </div>
         <button
-          onClick={() => router.push('/admin/add-user')}
+          onClick={() => router.push("/admin/add-user")}
           className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 flex items-center transition"
         >
           <Users size={20} className="mr-2" /> เพิ่มข้อมูลผู้ใช้งาน
         </button>
       </div>
 
-      {/* Search Bar */}
+      {/* 🔹 Search Bar */}
       <div className="w-full max-w-4xl bg-white p-4 shadow-md rounded-lg mb-6 flex items-center">
         <input
           type="text"
@@ -58,22 +83,46 @@ export default function ViewStudentPage() {
         </button>
       </div>
 
-      {/* Student List */}
+      {/* 🔹 Student List */}
       <div className="w-full max-w-4xl space-y-4">
-        {filteredStudents.length > 0 ? (
+        {loading ? (
+          <p className="text-gray-600 text-center">⏳ กำลังโหลดข้อมูล...</p>
+        ) : filteredStudents.length > 0 ? (
           filteredStudents.map((student) => (
-            <div key={student.id} className="bg-white p-6 shadow-md rounded-lg flex justify-between items-center hover:shadow-xl transition">
+            <div key={student.userID} className="bg-white p-6 shadow-md rounded-lg flex justify-between items-center hover:shadow-xl transition">
               <div>
-                <p className="font-bold text-lg text-gray-800">📌 {student.firstName} {student.lastName}</p>
-                <p className="text-gray-600">📞 {student.phone}</p>
-                <p className="text-gray-600">🆔 {student.studentId}</p>
+                <p className="font-bold text-lg text-gray-800">📌 {student.Name}</p>
+                <p className="text-gray-600">📞 {student.phoneNumber}</p>
+                <p className="text-gray-600">📧 {student.email}</p>
+                <p className="text-gray-600">🆔 {student.userID}</p>
+                <p className="text-gray-600">📌 สถานะ: {student.status}</p>
               </div>
-              <button 
-                className="bg-yellow-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-yellow-600 transition"
-                onClick={() => console.log('แก้ไข', student.id)}
-              >
-                ✏️ แก้ไข
-              </button>
+
+              {/* 🔑 แสดงรหัสผ่าน */}
+              <div className="flex items-center space-x-2 mt-2">
+                <p className="text-gray-600">🔑 รหัสผ่าน:</p>
+                <span className="text-gray-800 font-mono bg-gray-200 px-2 py-1 rounded">
+                  {showPasswords[student.userID] ? student.password : "••••••••"}
+                </span>
+                <button
+                  onClick={() => togglePasswordVisibility(student.userID)}
+                  className="text-blue-500 hover:text-blue-700 transition"
+                >
+                  {showPasswords[student.userID] ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  className="bg-yellow-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-yellow-600 transition"
+                >
+                  ✏️ แก้ไข
+                </button>
+                <button
+                  className="bg-red-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-red-600 transition"
+                >
+                  🗑️ ลบ
+                </button>
+              </div>
             </div>
           ))
         ) : (
@@ -81,23 +130,23 @@ export default function ViewStudentPage() {
         )}
       </div>
 
-      {/* Navigation Buttons */}
+      {/* 🔹 Navigation Buttons */}
       <div className="w-full max-w-4xl flex justify-between mt-8">
-        <button 
+        <button
           className="bg-green-500 text-white px-6 py-3 rounded-md shadow-md hover:bg-green-600 transition"
-          onClick={() => navigateToPage('student')}
+          onClick={() => navigateToPage("student")}
         >
           🎓 ข้อมูลนักศึกษา
         </button>
-        <button 
+        <button
           className="bg-blue-500 text-white px-6 py-3 rounded-md shadow-md hover:bg-blue-600 transition"
-          onClick={() => navigateToPage('teacher')}
+          onClick={() => navigateToPage("teacher")}
         >
           📚 ข้อมูลอาจารย์
         </button>
-        <button 
+        <button
           className="bg-purple-500 text-white px-6 py-3 rounded-md shadow-md hover:bg-purple-600 transition"
-          onClick={() => navigateToPage('admin')}
+          onClick={() => navigateToPage("admin")}
         >
           🏢 ข้อมูลเจ้าหน้าที่
         </button>

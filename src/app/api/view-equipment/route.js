@@ -7,7 +7,7 @@ export async function GET(req) {
         const { searchParams } = new URL(req.url);
         const equipmentID = searchParams.get("id"); // ✅ ใช้ ID แทน name
 
-        let query = "SELECT * FROM equipment";
+        let query = "SELECT * FROM equipment ORDER BY id DESC";
         let values = [];
 
         // ✅ ใช้ ID แทนการค้นหาด้วยชื่อ

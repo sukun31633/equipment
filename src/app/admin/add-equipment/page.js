@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState } from 'react';
 import AdminNavigationBar from "@/app/components/AdminNavigationBar";
+import { useRouter } from 'next/navigation';
 
 export default function AddEquipmentPage() {
     const [equipmentName, setEquipmentName] = useState("");
@@ -11,6 +12,7 @@ export default function AddEquipmentPage() {
     const [description, setDescription] = useState("");
     const [storageLocation, setStorageLocation] = useState("");
     const [image, setImage] = useState(null);
+    const router = useRouter(); // ใช้ router เพื่อการนำทาง
 
     const handleSave = async () => {
         if (!equipmentName || !equipmentCode || !category) {
@@ -43,6 +45,9 @@ export default function AddEquipmentPage() {
                 setDescription("");
                 setStorageLocation("");
                 setImage(null);
+
+                // นำทางไปหน้าข้อมูลอุปกรณ์
+                router.push('/admin/view-equipment'); 
             } else {
                 alert(data.message || "⚠️ เกิดข้อผิดพลาดในการเพิ่มข้อมูล");
             }
@@ -62,13 +67,11 @@ export default function AddEquipmentPage() {
 
             {/* 🔹 Form Section */}
             <div className="w-full max-w-4xl bg-white p-6 shadow-md rounded-lg">
-                {[
-                    { label: "📌 ชื่ออุปกรณ์ (ภาษาไทย)", value: equipmentName, setValue: setEquipmentName },
-                    { label: "🆔 รหัสอุปกรณ์", value: equipmentCode, setValue: setEquipmentCode }, // ✅ เพิ่มรหัสอุปกรณ์
-                    { label: "🏷️ ชื่อยี่ห้อและรุ่น", value: brand, setValue: setBrand },
-                    { label: "📍 ที่เก็บอุปกรณ์", value: storageLocation, setValue: setStorageLocation },
-                    { label: "📝 รายละเอียดอุปกรณ์", value: description, setValue: setDescription },
-                ].map(({ label, value, setValue }) => (
+                {[{ label: "📌 ชื่ออุปกรณ์ (ภาษาไทย)", value: equipmentName, setValue: setEquipmentName },
+                  { label: "🆔 รหัสอุปกรณ์", value: equipmentCode, setValue: setEquipmentCode }, 
+                  { label: "🏷️ ชื่อยี่ห้อและรุ่น", value: brand, setValue: setBrand }, 
+                  { label: "📍 ที่เก็บอุปกรณ์", value: storageLocation, setValue: setStorageLocation }, 
+                  { label: "📝 รายละเอียดอุปกรณ์", value: description, setValue: setDescription }].map(({ label, value, setValue }) => (
                     <div className="mb-4" key={label}>
                         <label className="block text-sm font-semibold mb-1 text-gray-700">{label}</label>
                         <input

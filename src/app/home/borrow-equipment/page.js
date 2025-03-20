@@ -17,6 +17,7 @@ export default function BorrowEquipmentPage() {
   const [usageReason, setUsageReason] = useState("");
   const [documentFile, setDocumentFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   // ใช้ useEffect เพื่อดึงข้อมูลชื่ออุปกรณ์จาก API
   useEffect(() => {
@@ -44,6 +45,7 @@ export default function BorrowEquipmentPage() {
     setBorrowDate(new Date().toISOString().split("T")[0]);
   }, []);
 
+  // ตรวจสอบวันที่คืนว่าไม่สามารถย้อนหลังได้
   const handleSubmit = async () => {
     if (!equipmentID) {
       alert("❌ ไม่พบอุปกรณ์ที่ต้องการยืม");
@@ -54,6 +56,17 @@ export default function BorrowEquipmentPage() {
       alert("⚠️ กรุณากรอกข้อมูลให้ครบถ้วน");
       return;
     }
+
+    // ตรวจสอบวันที่คืน (dueDate) ว่าไม่น้อยกว่าหรือย้อนหลังจากวันที่ยืม
+    const borrowDateObj = new Date(borrowDate);
+    const dueDateObj = new Date(dueDate);
+    
+    if (dueDateObj < borrowDateObj) {
+      setError("❌ วันที่คืนไม่สามารถย้อนกลับไปก่อนวันที่ยืมได้");
+      return;
+    }
+
+    setError("");  // รีเซ็ตข้อความข้อผิดพลาด
 
     setLoading(true);
     const formData = new FormData();
@@ -108,6 +121,7 @@ export default function BorrowEquipmentPage() {
           <div>
             <label className="block font-semibold mb-2 text-gray-700">📅 วันที่คืนอุปกรณ์:</label>
             <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="w-full border p-3 rounded shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            {error && <p className="text-red-600 mt-2">{error}</p>}
           </div>
         </div>
 

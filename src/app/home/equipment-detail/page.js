@@ -12,19 +12,26 @@ export default function EquipmentDetailPage() {
     const equipmentID = searchParams.get("id");  // ✅ ดึง ID จาก URL
 
     const [equipment, setEquipment] = useState(null);
+    const [loading, setLoading] = useState(true);  // เพิ่มตัวแปร loading
+    const [error, setError] = useState(null);  // เพิ่มตัวแปร error
 
     useEffect(() => {
         const fetchEquipment = async () => {
             try {
                 const res = await fetch(`/api/view-equipment?id=${encodeURIComponent(equipmentID)}`);
                 const data = await res.json();
+                
+                // ตรวจสอบว่า API response สำเร็จ
                 if (data.success && data.data.length > 0) {
                     setEquipment(data.data[0]);
+                    setLoading(false);  // เปลี่ยน loading เป็น false เมื่อข้อมูลถูกดึงมาเรียบร้อย
                 } else {
-                    console.error("❌ ไม่พบข้อมูลอุปกรณ์");
+                    setError("❌ ไม่พบข้อมูลอุปกรณ์");  // หากไม่พบข้อมูลให้แสดง error
+                    setLoading(false);
                 }
             } catch (error) {
-                console.error("❌ เกิดข้อผิดพลาดในการเชื่อมต่อ API", error);
+                setError("❌ เกิดข้อผิดพลาดในการเชื่อมต่อ API");
+                setLoading(false);
             }
         };
 
@@ -45,8 +52,12 @@ export default function EquipmentDetailPage() {
         router.push(`/home/reserve-equipment?id=${equipment.id}`);  // ✅ ส่ง id แทน name
     };
 
-    if (!equipment) {
+    if (loading) {
         return <p className="text-center mt-10 text-lg text-gray-700">⏳ กำลังโหลดข้อมูล...</p>;
+    }
+
+    if (error) {
+        return <p className="text-center mt-10 text-lg text-red-600">{error}</p>;  // แสดง error ถ้ามี
     }
 
     return (

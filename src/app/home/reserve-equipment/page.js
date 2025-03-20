@@ -18,6 +18,7 @@ export default function ReserveEquipmentPage() {
   const [courseCode, setCourseCode] = useState("");
   const [usageReason, setUsageReason] = useState("");
   const [file, setFile] = useState(null);
+  const [error, setError] = useState(""); // เก็บข้อความข้อผิดพลาด
 
   useEffect(() => {
     if (equipmentID) {
@@ -43,16 +44,27 @@ export default function ReserveEquipmentPage() {
     router.back();
   };
 
-  // ✅ ฟังก์ชันส่งข้อมูลไปยัง API
+  // ✅ ฟังก์ชันตรวจสอบวันที่
   const handleReserve = async () => {
     if (!startDate || !endDate || !reserveTime || !courseCode || !usageReason) {
       alert("⚠️ กรุณากรอกข้อมูลให้ครบถ้วน");
       return;
     }
-  
+
     // รวม startDate และ reserveTime เข้าด้วยกัน
     const fullStartDate = `${startDate} ${reserveTime}`;
-  
+
+    // ตรวจสอบว่า endDate (วันที่คืน) ไม่เก่ากว่าหรือย้อนกลับไปก่อน startDate (วันที่รับ)
+    const startDateObj = new Date(fullStartDate);
+    const endDateObj = new Date(endDate);
+
+    if (endDateObj < startDateObj) {
+      setError("❌ วันที่คืนไม่สามารถย้อนกลับไปก่อนวันที่รับอุปกรณ์ได้");
+      return; // ถ้าผิดพลาดจะหยุดการทำงาน
+    }
+
+    setError(""); // รีเซ็ตข้อความข้อผิดพลาด
+
     const formData = new FormData();
     formData.append("reserverName", "ชื่อผู้จอง (ดึงจาก session)");
     formData.append("userID", "userID (ดึงจาก session)");
@@ -62,13 +74,13 @@ export default function ReserveEquipmentPage() {
     formData.append("courseCode", courseCode);
     formData.append("usageReason", usageReason);
     if (file) formData.append("document", file);
-  
+
     try {
       const res = await fetch("/api/reservation", {
         method: "POST",
         body: formData,
       });
-  
+
       const data = await res.json();
       if (data.success) {
         alert("✅ การจองสำเร็จ!");
@@ -81,9 +93,6 @@ export default function ReserveEquipmentPage() {
       alert("❌ เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
     }
   };
-  
-  
-  
 
   return (
     <div className="p-8 pt-16 min-h-screen bg-gradient-to-br from-blue-500 to-blue-300 flex flex-col items-center w-full relative">
@@ -120,6 +129,7 @@ export default function ReserveEquipmentPage() {
               onChange={(e) => setEndDate(e.target.value)}
               className="w-full border p-3 rounded shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
+            {error && <p className="text-red-600 mt-2">{error}</p>}
           </div>
 
           {/* ⏰ เวลารับอุปกรณ์ */}

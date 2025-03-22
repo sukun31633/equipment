@@ -19,7 +19,9 @@ export default function HomePage() {
         const res = await fetch("/api/view-equipment");
         const data = await res.json();
         if (data.success) {
-          setEquipmentList(data.data);
+          // ฟิลเตอร์แค่สถานะที่ "Available" เท่านั้น
+          const availableEquipments = data.data.filter(equipment => equipment.status === "Available");
+          setEquipmentList(availableEquipments);
         } else {
           console.error("เกิดข้อผิดพลาดในการดึงข้อมูลอุปกรณ์");
         }

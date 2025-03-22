@@ -39,6 +39,9 @@ export async function POST(req) {
             return NextResponse.json({ success: false, message: "❌ ไม่พบอุปกรณ์ในระบบ" }, { status: 400 });
         }
 
+        // ✅ อัพเดตสถานะอุปกรณ์เป็น "Not Available" เมื่อมีการยืม
+        await pool.query("UPDATE equipment SET status = ? WHERE id = ?", ["Not Available", equipmentID]);
+
         // ✅ การจัดการไฟล์เอกสาร
         let documentPath = null;
         if (documentFile && documentFile.name) {

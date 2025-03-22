@@ -1,44 +1,68 @@
-"use client";
+"use client"; // ✅ ต้องใส่ไว้ที่บรรทัดแรก
 
-import { useState } from 'react';
-import { Search, ArrowLeft, Users } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation"; // ใช้ useRouter()
+import { Search, ArrowLeft, Users, Eye, EyeOff } from "lucide-react";
 
 export default function ViewTeacherPage() {
-  const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [teacherList, setTeacherList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showPasswords, setShowPasswords] = useState({});
+  const router = useRouter(); // ใช้ useRouter() สำหรับการนำทาง
 
-  // ข้อมูลตัวอย่างของอาจารย์
-  const mockTeachers = [
-    { id: 1, name: 'ดร.สมชาย ชาญชัย', phone: '081-111-1111', idCard: '1234567890123' },
-    { id: 2, name: 'ดร.วิไลลักษณ์ ทองดี', phone: '082-222-2222', idCard: '2345678901234' },
-    { id: 3, name: 'ดร.เฉลิมชัย สายชล', phone: '083-333-3333', idCard: '3456789012345' },
-    { id: 4, name: 'ดร.มาลี สีแดง', phone: '084-444-4444', idCard: '4567890123456' },
-  ];
+  useEffect(() => {
+    fetchTeachers();
+  }, []);
 
-  // ค้นหาข้อมูลอาจารย์
-  const filteredTeachers = mockTeachers.filter((teacher) =>
-    teacher.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const fetchTeachers = async () => {
+    try {
+      const res = await fetch("/api/view-users?type=อาจารย์"); // ดึงข้อมูลอาจารย์
+      const data = await res.json();
+      if (data.success) {
+        setTeacherList(data.data);
+      } else {
+        console.error("⚠️ เกิดข้อผิดพลาดในการดึงข้อมูลอาจารย์");
+      }
+    } catch (error) {
+      console.error("⚠️ Error fetching teachers:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const togglePasswordVisibility = (id) => {
+    setShowPasswords((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const filteredTeachers = teacherList.filter((teacher) =>
+    teacher.Name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // ฟังก์ชันเปลี่ยนหน้า
+  const handleBack = () => {
+    router.push("/admin/view-borrow"); // นำทางกลับ
+  };
+
+  // ฟังก์ชันนำทาง
   const navigateToPage = (page) => {
-    router.push(`/admin/add-user/${page}`);
+    router.push(`/admin/add-user/${page}`); // เปลี่ยนจาก navigateToPage เป็น router.push()
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 p-6 pb-24 flex flex-col items-center">
-      
       {/* 🔹 Header Section */}
       <div className="w-full max-w-4xl bg-white p-4 shadow-lg flex items-center justify-between rounded-lg mb-6">
         <div className="flex items-center">
-          <button onClick={() => router.push('/admin/view-borrow')} className="text-blue-500 hover:text-blue-700 transition">
+          <button onClick={handleBack} className="text-blue-500 hover:text-blue-700 transition">
             <ArrowLeft size={26} />
           </button>
-          <h2 className="text-xl font-semibold text-gray-800 ml-4">👨‍🏫 ข้อมูลอาจารย์</h2>
+          <h2 className="text-xl font-semibold text-gray-800 ml-4">📚 ข้อมูลอาจารย์</h2>
         </div>
         <button
-          onClick={() => router.push('/admin/add-user')}
+          onClick={() => router.push("/admin/add-user")}
           className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 flex items-center transition"
         >
           <Users size={20} className="mr-2" /> เพิ่มข้อมูลผู้ใช้งาน
@@ -61,20 +85,44 @@ export default function ViewTeacherPage() {
 
       {/* 🔹 Teacher List */}
       <div className="w-full max-w-4xl space-y-4">
-        {filteredTeachers.length > 0 ? (
+        {loading ? (
+          <p className="text-gray-600 text-center">⏳ กำลังโหลดข้อมูล...</p>
+        ) : filteredTeachers.length > 0 ? (
           filteredTeachers.map((teacher) => (
-            <div key={teacher.id} className="bg-white p-6 shadow-md rounded-lg flex justify-between items-center hover:shadow-xl transition">
+            <div key={teacher.userID} className="bg-white p-6 shadow-md rounded-lg flex justify-between items-center hover:shadow-xl transition">
               <div>
-                <p className="font-bold text-lg text-gray-800">📌 {teacher.name}</p>
-                <p className="text-gray-600">📞 {teacher.phone}</p>
-                <p className="text-gray-600">🆔 {teacher.idCard}</p>
+                <p className="font-bold text-lg text-gray-800">📌 {teacher.Name}</p>
+                <p className="text-gray-600">📞 {teacher.phoneNumber}</p>
+                <p className="text-gray-600">📧 {teacher.email}</p>
+                <p className="text-gray-600">🆔 {teacher.userID}</p>
+                <p className="text-gray-600">📌 สถานะ: {teacher.status}</p>
+
+                {/* 🔑 แสดงรหัสผ่าน */}
+                <div className="flex items-center space-x-2 mt-2">
+                  <p className="text-gray-600">🔑 รหัสผ่าน:</p>
+                  <span className="text-gray-800 font-mono bg-gray-200 px-2 py-1 rounded">
+                    {showPasswords[teacher.userID] ? teacher.password : "••••••••"}
+                  </span>
+                  <button
+                    onClick={() => togglePasswordVisibility(teacher.userID)}
+                    className="text-blue-500 hover:text-blue-700 transition"
+                  >
+                    {showPasswords[teacher.userID] ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
-              <button 
-                className="bg-yellow-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-yellow-600 transition"
-                onClick={() => console.log('แก้ไข', teacher.id)}
-              >
-                ✏️ แก้ไข
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  className="bg-yellow-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-yellow-600 transition"
+                >
+                  ✏️ แก้ไข
+                </button>
+                <button
+                  className="bg-red-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-red-600 transition"
+                >
+                  🗑️ ลบ
+                </button>
+              </div>
             </div>
           ))
         ) : (
@@ -84,21 +132,21 @@ export default function ViewTeacherPage() {
 
       {/* 🔹 Navigation Buttons */}
       <div className="w-full max-w-4xl flex justify-between mt-8">
-        <button 
+        <button
           className="bg-green-500 text-white px-6 py-3 rounded-md shadow-md hover:bg-green-600 transition"
-          onClick={() => navigateToPage('student')}
+          onClick={() => navigateToPage("student")}
         >
           🎓 ข้อมูลนักศึกษา
         </button>
-        <button 
+        <button
           className="bg-blue-500 text-white px-6 py-3 rounded-md shadow-md hover:bg-blue-600 transition"
-          onClick={() => navigateToPage('teacher')}
+          onClick={() => navigateToPage("teacher")}
         >
           📚 ข้อมูลอาจารย์
         </button>
-        <button 
+        <button
           className="bg-purple-500 text-white px-6 py-3 rounded-md shadow-md hover:bg-purple-600 transition"
-          onClick={() => navigateToPage('admin')}
+          onClick={() => navigateToPage("admin")}
         >
           🏢 ข้อมูลเจ้าหน้าที่
         </button>

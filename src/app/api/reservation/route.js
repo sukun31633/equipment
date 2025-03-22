@@ -41,6 +41,9 @@ export async function POST(req) {
 
         const equipmentID = equipment[0].id; // ✅ ใช้ `equipmentID` แทนชื่ออุปกรณ์
 
+        // ✅ อัพเดตสถานะอุปกรณ์เป็น "Not Available" เมื่อมีการจอง
+        await pool.query("UPDATE equipment SET status = ? WHERE id = ?", ["Not Available", equipmentID]);
+
         let documentPath = "";
         if (documentFile && documentFile.name) {
             // 📂 บันทึกไฟล์ลงโฟลเดอร์ uploads
@@ -65,7 +68,7 @@ export async function POST(req) {
             `INSERT INTO reservation (reserverName, userID, equipmentID, startDate, endDate, courseCode, usageReason, document, status) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending')`,
             [reserverName, userID, equipmentID, fullStartDate, endDate, courseCode, usageReason, documentPath]
-          );
+        );
 
         return NextResponse.json({
             success: true,

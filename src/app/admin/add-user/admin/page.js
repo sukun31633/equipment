@@ -52,7 +52,6 @@ export default function ViewStaffPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 p-6 pb-24 flex flex-col items-center">
-      
       {/* 🔹 Header Section */}
       <div className="w-full max-w-4xl bg-white p-4 shadow-lg flex items-center justify-between rounded-lg mb-6">
         <div className="flex items-center">
@@ -96,7 +95,7 @@ export default function ViewStaffPage() {
                 <p className="text-gray-600">📧 {staff.email}</p>
                 <p className="text-gray-600">🆔 {staff.userID}</p>
                 <p className="text-gray-600">📌 สถานะ: {staff.status}</p>
-                
+
                 {/* 🔑 แสดงรหัสผ่าน */}
                 <div className="flex items-center space-x-2 mt-2">
                   <p className="text-gray-600">🔑 รหัสผ่าน:</p>
@@ -112,12 +111,14 @@ export default function ViewStaffPage() {
                 </div>
               </div>
               <div className="flex space-x-2">
-                <button 
-                  className="bg-yellow-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-yellow-600 transition"
-                >
-                  ✏️ แก้ไข
-                </button>
-                <button 
+              <button
+  className="bg-yellow-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-yellow-600 transition"
+  onClick={() => router.push(`/admin/add-user/edit-user?id=${staff.userID}`)} // ปรับเส้นทางให้ตรง
+>
+  ✏️ แก้ไข
+</button>
+
+                <button
                   className="bg-red-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-red-600 transition"
                 >
                   🗑️ ลบ
@@ -132,19 +133,19 @@ export default function ViewStaffPage() {
 
       {/* 🔹 Navigation Buttons */}
       <div className="w-full max-w-4xl flex justify-between mt-8">
-        <button 
+        <button
           className="bg-green-500 text-white px-6 py-3 rounded-md shadow-md hover:bg-green-600 transition"
           onClick={() => navigateToPage('student')}
         >
           🎓 ข้อมูลนักศึกษา
         </button>
-        <button 
+        <button
           className="bg-blue-500 text-white px-6 py-3 rounded-md shadow-md hover:bg-blue-600 transition"
           onClick={() => navigateToPage('teacher')}
         >
           📚 ข้อมูลอาจารย์
         </button>
-        <button 
+        <button
           className="bg-purple-500 text-white px-6 py-3 rounded-md shadow-md hover:bg-purple-600 transition"
           onClick={() => navigateToPage('admin')}
         >

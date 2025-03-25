@@ -112,11 +112,13 @@ export default function ViewTeacherPage() {
                 </div>
               </div>
               <div className="flex space-x-2">
-                <button
-                  className="bg-yellow-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-yellow-600 transition"
-                >
-                  ✏️ แก้ไข
-                </button>
+              <button
+  className="bg-yellow-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-yellow-600 transition"
+  onClick={() => router.push(`/admin/add-user/edit-user?id=${teacher.userID}`)} // เพิ่มการส่ง userID ไปยังหน้าแก้ไข
+>
+  ✏️ แก้ไข
+</button>
+
                 <button
                   className="bg-red-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-red-600 transition"
                 >

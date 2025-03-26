@@ -4,20 +4,20 @@ import pool from "../../../../lib/mysql"; // เชื่อมต่อกั�
 export async function PUT(req) {
   try {
     // ดึงข้อมูลจาก request body
-    const { userID, name, phoneNumber, email, status,  } = await req.json();
+    const { userID, name, phoneNumber, email, password } = await req.json();
 
     // ตรวจสอบข้อมูลที่จำเป็น
-    if (!userID || !name || !phoneNumber || !email || !status  ) {
+    if (!userID || !name || !phoneNumber || !email || !password) {
       return NextResponse.json({ success: false, message: "❌ ข้อมูลไม่ครบถ้วน" }, { status: 400 });
     }
 
     // SQL query สำหรับการอัปเดตข้อมูลผู้ใช้
-    const query = `
-      UPDATE user 
-      SET Name = ?, phoneNumber = ?, email = ?, status = ?, facultyCode = ?
-      WHERE userID = ?;
-    `;
-    const values = [name, phoneNumber, email, status, userID];
+    const query = `date-user 
+    UPDATE user 
+    SET Name = ?, phoneNumber = ?, email = ?, password = ?
+    WHERE userID = ?;
+  `;
+  const values = [name, phoneNumber, email, password, userID];
 
     // อัปเดตข้อมูลในฐานข้อมูล
     const [result] = await pool.query(query, values);

@@ -1,33 +1,77 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, ArrowLeft, Users, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Search, ArrowLeft, Users, Eye, EyeOff, Trash2 } from "lucide-react";
 
-export default function ViewStaffPage() {
+export default function ViewTeacherPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [staffList, setStaffList] = useState([]);
+  const [teacherList, setTeacherList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showPasswords, setShowPasswords] = useState({}); // สำหรับซ่อน/แสดงรหัสผ่าน
+  const [showPasswords, setShowPasswords] = useState({});
   const router = useRouter();
 
   useEffect(() => {
-    fetchStaff();
+    fetchTeachers();
   }, []);
 
-  const fetchStaff = async () => {
+  const fetchTeachers = async () => {
     try {
-      const res = await fetch(`/api/view-users?type=เจ้าหน้าที่`);
+      const res = await fetch("/api/view-users?type=อาจารย์");
       const data = await res.json();
       if (data.success) {
-        setStaffList(data.data);
+        setTeacherList(data.data);
       } else {
-        console.error("⚠️ เกิดข้อผิดพลาดในการดึงข้อมูลเจ้าหน้าที่");
+        console.error("⚠️ เกิดข้อผิดพลาดในการดึงข้อมูลอาจารย์");
       }
     } catch (error) {
-      console.error("⚠️ Error fetching staff:", error);
+      console.error("⚠️ Error fetching teachers:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const deleteUser = async (userID) => {
+    if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้นี้?")) {
+      try {
+        const res = await fetch("/api/delete-user", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userID }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          alert("✅ ลบข้อมูลสำเร็จ");
+          fetchTeachers();
+        } else {
+          alert("❌ ลบข้อมูลไม่สำเร็จ");
+        }
+      } catch (error) {
+        console.error("❌ Error deleting user:", error);
+      }
+    }
+  };
+
+  const deleteAllTeachers = async () => {
+    if (confirm("⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้อาจารย์ทั้งหมด?")) {
+      try {
+        const res = await fetch("/api/delete-user-type", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "อาจารย์" }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          alert("✅ ลบข้อมูลอาจารย์ทั้งหมดสำเร็จ");
+          fetchTeachers();
+        } else {
+          alert("❌ ลบข้อมูลอาจารย์ทั้งหมดไม่สำเร็จ");
+        }
+      } catch (error) {
+        console.error("❌ Error deleting all teachers:", error);
+      }
     }
   };
 
@@ -38,12 +82,12 @@ export default function ViewStaffPage() {
     }));
   };
 
-  const filteredStaff = staffList.filter((staff) =>
-    staff.Name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTeachers = teacherList.filter((teacher) =>
+    teacher.Name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleBack = () => {
-    router.push('/admin/view-borrow');
+    router.push("/admin/view-borrow");
   };
 
   const navigateToPage = (page) => {
@@ -52,27 +96,34 @@ export default function ViewStaffPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 p-6 pb-24 flex flex-col items-center">
-      {/* 🔹 Header Section */}
       <div className="w-full max-w-4xl bg-white p-4 shadow-lg flex items-center justify-between rounded-lg mb-6">
         <div className="flex items-center">
           <button onClick={handleBack} className="text-blue-500 hover:text-blue-700 transition">
             <ArrowLeft size={26} />
           </button>
-          <h2 className="text-xl font-semibold text-gray-800 ml-4">👨‍💼 ข้อมูลเจ้าหน้าที่</h2>
+          <h2 className="text-xl font-semibold text-gray-800 ml-4">📚 ข้อมูลอาจารย์</h2>
         </div>
-        <button
-          onClick={() => router.push('/admin/add-user')}
-          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 flex items-center transition"
-        >
-          <Users size={20} className="mr-2" /> เพิ่มข้อมูลผู้ใช้งาน
-        </button>
+        <div className="flex gap-2">
+          
+          <button
+            onClick={() => router.push("/admin/add-user")}
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 flex items-center transition"
+          >
+            <Users size={20} className="mr-2" /> เพิ่มข้อมูลผู้ใช้งาน
+          </button>
+          <button
+            onClick={deleteAllTeachers}
+            className="bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600 transition flex items-center"
+          >
+            <Trash2 size={18} className="mr-1" /> ลบเจ้าหน้าที่ทั้งหมด
+          </button>
+        </div>
       </div>
 
-      {/* 🔹 Search Bar */}
       <div className="w-full max-w-4xl bg-white p-4 shadow-md rounded-lg mb-6 flex items-center">
         <input
           type="text"
-          placeholder="🔍 ค้นหาชื่อเจ้าหน้าที่..."
+          placeholder="🔍 ค้นหาชื่ออาจารย์..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full border-none p-3 rounded-l-md bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none text-gray-700"
@@ -82,43 +133,41 @@ export default function ViewStaffPage() {
         </button>
       </div>
 
-      {/* 🔹 Staff List */}
       <div className="w-full max-w-4xl space-y-4">
         {loading ? (
           <p className="text-gray-600 text-center">⏳ กำลังโหลดข้อมูล...</p>
-        ) : filteredStaff.length > 0 ? (
-          filteredStaff.map((staff) => (
-            <div key={staff.userID} className="bg-white p-6 shadow-md rounded-lg flex justify-between items-center hover:shadow-xl transition">
+        ) : filteredTeachers.length > 0 ? (
+          filteredTeachers.map((teacher) => (
+            <div key={teacher.userID} className="bg-white p-6 shadow-md rounded-lg flex justify-between items-center hover:shadow-xl transition">
               <div>
-                <p className="font-bold text-lg text-gray-800">📌 {staff.Name}</p>
-                <p className="text-gray-600">📞 {staff.phoneNumber}</p>
-                <p className="text-gray-600">📧 {staff.email}</p>
-                <p className="text-gray-600">🆔 {staff.userID}</p>
-                <p className="text-gray-600">📌 สถานะ: {staff.status}</p>
+                <p className="font-bold text-lg text-gray-800">📌 {teacher.Name}</p>
+                <p className="text-gray-600">📞 {teacher.phoneNumber}</p>
+                <p className="text-gray-600">📧 {teacher.email}</p>
+                <p className="text-gray-600">🆔 {teacher.userID}</p>
+                <p className="text-gray-600">📌 สถานะ: {teacher.status}</p>
 
-                {/* 🔑 แสดงรหัสผ่าน */}
                 <div className="flex items-center space-x-2 mt-2">
                   <p className="text-gray-600">🔑 รหัสผ่าน:</p>
                   <span className="text-gray-800 font-mono bg-gray-200 px-2 py-1 rounded">
-                    {showPasswords[staff.userID] ? staff.password : "••••••••"}
+                    {showPasswords[teacher.userID] ? teacher.password : "••••••••"}
                   </span>
                   <button
-                    onClick={() => togglePasswordVisibility(staff.userID)}
+                    onClick={() => togglePasswordVisibility(teacher.userID)}
                     className="text-blue-500 hover:text-blue-700 transition"
                   >
-                    {showPasswords[staff.userID] ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showPasswords[teacher.userID] ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
               <div className="flex space-x-2">
-              <button
-  className="bg-yellow-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-yellow-600 transition"
-  onClick={() => router.push(`/admin/add-user/edit-user?id=${staff.userID}`)} // ปรับเส้นทางให้ตรง
->
-  ✏️ แก้ไข
-</button>
-
                 <button
+                  className="bg-yellow-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-yellow-600 transition"
+                  onClick={() => router.push(`/admin/add-user/edit-user?id=${teacher.userID}`)}
+                >
+                  ✏️ แก้ไข
+                </button>
+                <button
+                  onClick={() => deleteUser(teacher.userID)}
                   className="bg-red-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-red-600 transition"
                 >
                   🗑️ ลบ
@@ -127,27 +176,26 @@ export default function ViewStaffPage() {
             </div>
           ))
         ) : (
-          <p className="text-gray-600 text-center">❌ ไม่พบข้อมูลเจ้าหน้าที่</p>
+          <p className="text-gray-600 text-center">❌ ไม่พบข้อมูลอาจารย์</p>
         )}
       </div>
 
-      {/* 🔹 Navigation Buttons */}
       <div className="w-full max-w-4xl flex justify-between mt-8">
         <button
           className="bg-green-500 text-white px-6 py-3 rounded-md shadow-md hover:bg-green-600 transition"
-          onClick={() => navigateToPage('student')}
+          onClick={() => navigateToPage("student")}
         >
           🎓 ข้อมูลนักศึกษา
         </button>
         <button
           className="bg-blue-500 text-white px-6 py-3 rounded-md shadow-md hover:bg-blue-600 transition"
-          onClick={() => navigateToPage('teacher')}
+          onClick={() => navigateToPage("teacher")}
         >
           📚 ข้อมูลอาจารย์
         </button>
         <button
           className="bg-purple-500 text-white px-6 py-3 rounded-md shadow-md hover:bg-purple-600 transition"
-          onClick={() => navigateToPage('admin')}
+          onClick={() => navigateToPage("admin")}
         >
           🏢 ข้อมูลเจ้าหน้าที่
         </button>

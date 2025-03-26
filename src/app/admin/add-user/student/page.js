@@ -1,7 +1,7 @@
-"use client"; // ✅ ต้องใส่ไว้ที่บรรทัดแรก
+"use client";
 
 import { useState, useEffect } from 'react';
-import { Search, ArrowLeft, Users, Eye, EyeOff } from 'lucide-react';
+import { Search, ArrowLeft, Users, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function ViewStudentPage() {
@@ -23,11 +23,11 @@ export default function ViewStudentPage() {
         setStudentList(data.data);
       } else {
         console.error("⚠️ เกิดข้อผิดพลาดในการดึงข้อมูลนักศึกษา");
-        setStudentList([]); // ถ้าเกิดข้อผิดพลาดให้ล้างข้อมูล
+        setStudentList([]);
       }
     } catch (error) {
       console.error("⚠️ Error fetching students:", error);
-      setStudentList([]); // ถ้าการเชื่อมต่อไม่สำเร็จให้ล้างข้อมูล
+      setStudentList([]);
     } finally {
       setLoading(false);
     }
@@ -38,6 +38,48 @@ export default function ViewStudentPage() {
       ...prev,
       [id]: !prev[id],
     }));
+  };
+
+  const handleDeleteUser = async (userID) => {
+    if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้นี้?")) {
+      try {
+        const res = await fetch(`/api/delete-user`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userID }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("✅ ลบข้อมูลผู้ใช้สำเร็จ");
+          fetchStudents();
+        } else {
+          alert("❌ ไม่สามารถลบข้อมูลได้");
+        }
+      } catch (error) {
+        console.error("❌ ลบข้อมูลผิดพลาด:", error);
+      }
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (confirm("⚠️ ต้องการลบนักศึกษาทั้งหมดใช่หรือไม่?")) {
+      try {
+        const res = await fetch(`/api/delete-user-type`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: "นักศึกษา" }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("✅ ลบข้อมูลนักศึกษาทั้งหมดเรียบร้อยแล้ว");
+          fetchStudents();
+        } else {
+          alert("❌ ไม่สามารถลบข้อมูลทั้งหมดได้");
+        }
+      } catch (error) {
+        console.error("❌ ลบทั้งหมดผิดพลาด:", error);
+      }
+    }
   };
 
   const filteredStudents = studentList.filter((student) =>
@@ -58,12 +100,20 @@ export default function ViewStudentPage() {
           </button>
           <h2 className="text-xl font-semibold text-gray-800 ml-4">🎓 ข้อมูลนักศึกษา</h2>
         </div>
-        <button
-          onClick={() => router.push('/admin/add-user')}
-          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 flex items-center transition"
-        >
-          <Users size={20} className="mr-2" /> เพิ่มข้อมูลผู้ใช้งาน
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => router.push('/admin/add-user')}
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 flex items-center transition"
+          >
+            <Users size={20} className="mr-2" /> เพิ่มข้อมูลผู้ใช้งาน
+          </button>
+          <button
+            onClick={handleDeleteAll}
+            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 flex items-center transition"
+          >
+            <Trash2 size={20} className="mr-2" /> ลบนักศึกษาทั้งหมด
+          </button>
+        </div>
       </div>
 
       {/* 🔹 Search Bar */}
@@ -109,15 +159,15 @@ export default function ViewStudentPage() {
                 </div>
               </div>
               <div className="flex space-x-2">
-              <button
-  className="bg-yellow-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-yellow-600 transition"
-  onClick={() => router.push(`/admin/add-user/edit-user?id=${student.userID}`)}  // ส่งค่า userID ผ่าน query
- // ปรับ path ให้ถูกต้อง
->
-  ✏️ แก้ไข
-</button>
+                <button
+                  className="bg-yellow-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-yellow-600 transition"
+                  onClick={() => router.push(`/admin/add-user/edit-user?id=${student.userID}`)}
+                >
+                  ✏️ แก้ไข
+                </button>
 
-                <button 
+                <button
+                  onClick={() => handleDeleteUser(student.userID)}
                   className="bg-red-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-red-600 transition"
                 >
                   🗑️ ลบ

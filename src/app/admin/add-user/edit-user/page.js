@@ -22,7 +22,7 @@ export default function EditUserPage() {
   useEffect(() => {
     if (!id) {
       alert("\u274C ไม่พบ ID ผู้ใช้");
-      router.push("/admin/view-users");
+      router.back();
       return;
     }
 
@@ -43,16 +43,16 @@ export default function EditUserPage() {
             });
           } else {
             alert("\u26A0\uFE0F ไม่พบข้อมูลผู้ใช้ที่ต้องการแก้ไข");
-            router.push("/admin/view-users");
+            router.back();
           }
         } else {
           alert("\u26A0\uFE0F ไม่พบข้อมูลผู้ใช้");
-          router.push("/admin/view-users");
+          router.back();
         }
       } catch (error) {
         console.error("⚠️ เกิดข้อผิดพลาด:", error);
         alert("\u274C ไม่สามารถโหลดข้อมูลผู้ใช้ได้");
-        router.push("/admin/view-users");
+        router.back();
       } finally {
         setLoading(false);
       }

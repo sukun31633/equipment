@@ -12,7 +12,7 @@ export async function PUT(req) {
     }
 
     // SQL query สำหรับการอัปเดตข้อมูลผู้ใช้
-    const query = `date-user 
+    const query = `
     UPDATE user 
     SET Name = ?, phoneNumber = ?, email = ?, password = ?
     WHERE userID = ?;

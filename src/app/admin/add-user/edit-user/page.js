@@ -137,7 +137,7 @@ export default function EditUserPage() {
           <div>
             <label className="block text-gray-700 font-medium">🔑 รหัสผ่าน</label>
             <input
-              type="password"
+              type="text"
               name="password"
               value={user.password}
               onChange={handleChange}

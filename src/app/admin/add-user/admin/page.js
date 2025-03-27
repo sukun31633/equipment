@@ -78,9 +78,13 @@ export default function ViewStaffPage() {
     }
   };
 
-  const filteredStaff = staffList.filter((staff) =>
-    staff.Name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredStaff = staffList.filter((staff) => {
+    const lowerSearch = searchTerm.toLowerCase();
+    return (
+      staff.Name.toLowerCase().includes(lowerSearch) ||
+      staff.userID.toLowerCase().includes(lowerSearch)
+    );
+  });
 
   const handleBack = () => {
     router.push("/admin/view-borrow");
@@ -118,7 +122,7 @@ export default function ViewStaffPage() {
       <div className="w-full max-w-4xl bg-white p-4 shadow-md rounded-lg mb-6 flex items-center">
         <input
           type="text"
-          placeholder="🔍 ค้นหาชื่อเจ้าหน้าที่..."
+          placeholder="🔍 ค้นหาชื่อเจ้าหน้าที่หรือรหัสประจำตัวเจ้าหน้าที่"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full border-none p-3 rounded-l-md bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none text-gray-700"

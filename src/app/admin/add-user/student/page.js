@@ -109,9 +109,13 @@ export default function ViewStudentPage() {
   };
 
   // ฟิลเตอร์รายชื่อนักศึกษาจาก searchTerm
-  const filteredStudents = studentList.filter((student) =>
-    student.Name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredStudents = studentList.filter((student) => {
+    const lowerSearch = searchTerm.toLowerCase();
+    return (
+      student.Name.toLowerCase().includes(lowerSearch) ||
+      student.userID.toLowerCase().includes(lowerSearch)
+    );
+  });
 
   // ===== ส่วนของการอัปโหลดไฟล์ Excel =====
   const handleFileChange = (e) => {
@@ -214,7 +218,7 @@ export default function ViewStudentPage() {
       <div className="w-full max-w-4xl bg-white p-4 shadow-md rounded-lg mb-6 flex items-center">
         <input
           type="text"
-          placeholder="🔍 ค้นหาชื่อนักศึกษา..."
+          placeholder="🔍 ค้นหาชื่อนักศึกษาหรือรหัสประจำตัวนักศึกษา"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full border-none p-3 rounded-l-md bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none text-gray-700"

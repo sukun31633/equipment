@@ -78,9 +78,13 @@ export default function ViewTeacherPage() {
     }
   };
 
-  const filteredTeachers = teacherList.filter((teacher) =>
-    teacher.Name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTeachers = teacherList.filter((teacher) => {
+    const lowerSearch = searchTerm.toLowerCase();
+    return (
+      teacher.Name.toLowerCase().includes(lowerSearch) ||
+      teacher.userID.toLowerCase().includes(lowerSearch)
+    );
+  });
 
   const handleBack = () => {
     router.push("/admin/view-borrow");
@@ -118,7 +122,7 @@ export default function ViewTeacherPage() {
       <div className="w-full max-w-4xl bg-white p-4 shadow-md rounded-lg mb-6 flex items-center">
         <input
           type="text"
-          placeholder="🔍 ค้นหาชื่ออาจารย์..."
+          placeholder="🔍 ค้นหาชื่ออาจารย์หรือรหัสประจำตัวอาจารย์"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full border-none p-3 rounded-l-md bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none text-gray-700"

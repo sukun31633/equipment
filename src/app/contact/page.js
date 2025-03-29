@@ -32,7 +32,7 @@ export default function ContactUsPage() {
           
           {/* ปุ่มโทรออก */}
           <motion.a 
-            href="tel:021234567" 
+            href="tel:023126300" 
             whileHover={{ scale: 1.05 }}
             className="flex items-center border p-3 rounded-lg mb-3 border-gray-300 bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 transition shadow-lg"
           >
@@ -42,7 +42,7 @@ export default function ContactUsPage() {
           
           {/* ปุ่มส่งอีเมล */}
           <motion.a 
-            href="mailto:support@university.ac.th" 
+            href="mailto:apichart.pai@hcu.ac.th" 
             whileHover={{ scale: 1.05 }}
             className="flex items-center border p-3 rounded-lg border-gray-300 bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 transition shadow-lg"
           >

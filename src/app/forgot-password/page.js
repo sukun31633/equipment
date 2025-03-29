@@ -1,21 +1,44 @@
 "use client";
 
-import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 export default function ForgotPasswordPage() {
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState("");
   const router = useRouter();
 
   const handleBack = () => {
     router.back();
   };
 
-  // ฟังก์ชันสำหรับไปยังหน้า "ยืนยันรหัส OTP"
-  const handleRequestPassword = () => {
-    router.push('/forgot-password/verify-otp');
+  const handleRequestPassword = async () => {
+    if (!phoneNumber.trim()) {
+      alert("กรุณากรอกหมายเลขโทรศัพท์");
+      return;
+    }
+  
+    try {
+      // เรียก API เพื่อขอ OTP
+      const res = await fetch("/api/forgot-password/request-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: phoneNumber }),
+      });
+      const data = await res.json();
+  
+      if (data.success) {
+        alert("ส่ง OTP แล้ว");
+        // แล้วค่อยไปหน้า verify-otp โดยส่งเบอร์โทรไปด้วย
+        router.push(`/forgot-password/verify-otp?phone=${encodeURIComponent(phoneNumber)}`);
+      } else {
+        alert("ส่ง OTP ไม่สำเร็จ: " + data.message);
+      }
+    } catch (error) {
+      console.error("Error requesting OTP:", error);
+      alert("เกิดข้อผิดพลาดในการส่ง OTP");
+    }
   };
 
   return (
@@ -38,7 +61,9 @@ export default function ForgotPasswordPage() {
           <h2 className="text-xl font-bold text-blue-700">ลืมรหัสผ่าน</h2>
         </div>
         <div className="mb-6">
-          <label className="block text-sm font-semibold mb-1 text-gray-700">หมายเลขโทรศัพท์</label>
+          <label className="block text-sm font-semibold mb-1 text-gray-700">
+            หมายเลขโทรศัพท์
+          </label>
           <input
             type="text"
             placeholder="กรอกหมายเลขโทรศัพท์"

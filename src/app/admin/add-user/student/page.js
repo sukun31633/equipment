@@ -208,7 +208,7 @@ export default function ViewStudentPage() {
               className="bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-600 flex items-center transition"
             >
               <Upload size={20} className="mr-2" />
-              Upload File
+              อัปโหลดไฟล์
             </button>
           </div>
         </div>

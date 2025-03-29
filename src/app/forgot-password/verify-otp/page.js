@@ -1,21 +1,64 @@
 "use client";
 
-import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { ArrowLeft } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { motion } from "framer-motion";
 
 export default function VerifyOtpPage() {
-  const [otp, setOtp] = useState('');
+  const [otp, setOtp] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const phone = searchParams.get("phone");
+
+  // ฟังก์ชันสำหรับแปลงเบอร์โทร (เหมือนใน request-otp)
+  function formatPhone(phone) {
+    phone = phone.trim();
+    if (phone.startsWith("0")) {
+      return "+66" + phone.slice(1);
+    }
+    return phone;
+  }
+
+  useEffect(() => {
+    if (!phone) {
+      alert("ไม่พบหมายเลขโทรศัพท์ กรุณาลองใหม่");
+      router.back();
+    }
+  }, [phone, router]);
 
   const handleBack = () => {
     router.back();
   };
 
-  const handleVerifyOtp = () => {
-    // เมื่อตรวจสอบรหัส OTP สำเร็จ ให้เปลี่ยนไปยังหน้ารีเซ็ตรหัสผ่าน
-    router.push('/forgot-password/reset-password');
+  const handleVerifyOtp = async () => {
+    if (!otp.trim()) {
+      alert("กรุณากรอกรหัส OTP");
+      return;
+    }
+    setLoading(true);
+    try {
+      // ใช้ฟังก์ชัน formatPhone เพื่อให้เบอร์ตรงกันกับที่เก็บใน otpStorage
+      const formattedPhone = formatPhone(phone);
+      const res = await fetch("/api/forgot-password/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: formattedPhone, otp }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("รหัส OTP ถูกต้อง! กรุณาตั้งรหัสผ่านใหม่");
+        router.push(`/forgot-password/reset-password?phone=${encodeURIComponent(formattedPhone)}`);
+      } else {
+        alert("รหัส OTP ไม่ถูกต้องหรือหมดอายุ: " + data.message);
+      }
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      alert("เกิดข้อผิดพลาดในการตรวจสอบ OTP");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,9 +96,12 @@ export default function VerifyOtpPage() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleVerifyOtp}
-          className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-3 rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all shadow-lg"
+          disabled={loading}
+          className={`w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-3 rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all shadow-lg ${
+            loading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
-          ยืนยันรหัส
+          {loading ? "กำลังตรวจสอบ..." : "ยืนยันรหัส"}
         </motion.button>
       </motion.div>
     </div>

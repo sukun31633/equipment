@@ -18,7 +18,7 @@ export async function POST(request) {
 
     const formattedPhone = formatPhone(phone);
 
-    // ดึง OTP จากตาราง otp_codes
+    // ดึงข้อมูล OTP จากตาราง otp_codes ด้วยเบอร์ที่ผ่านการแปลงแล้ว
     const conn = await pool.getConnection();
     let rows;
     try {
@@ -35,16 +35,14 @@ export async function POST(request) {
     }
 
     const record = rows[0];
-
     if (Date.now() > record.expires) {
       return NextResponse.json({ success: false, message: "OTP expired" });
     }
-
     if (record.otp !== otp) {
       return NextResponse.json({ success: false, message: "Invalid OTP" });
     }
 
-    // ถ้า OTP ถูกต้อง ลบออกจากตาราง (กันใช้ซ้ำ)
+    // OTP ถูกต้องแล้ว ลบ record ออกจากตารางเพื่อป้องกันการใช้ซ้ำ
     const conn2 = await pool.getConnection();
     try {
       await conn2.query("DELETE FROM otp_codes WHERE phone = ?", [formattedPhone]);

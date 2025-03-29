@@ -60,7 +60,7 @@ export default function ResetPasswordPage() {
       const data = await res.json();
       if (data.success) {
         alert("รีเซ็ตรหัสผ่านเรียบร้อยแล้ว");
-        router.back(); // ย้อนกลับไปหน้าก่อนหน้า
+        router.push("/"); // ย้ายไปหน้าแรก
       } else {
         alert("ไม่สามารถรีเซ็ตรหัสผ่านได้: " + data.message);
       }

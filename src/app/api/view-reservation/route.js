@@ -9,7 +9,7 @@ export async function GET(req) {
                 r.reservationID, r.reserverName, r.userID, r.startDate, r.endDate, r.status, 
                 r.usageReason, r.document, r.courseCode, 
                 e.name AS equipmentName, e.equipment_code, e.location, e.description, 
-                e.image
+                e.image,e.brand
             FROM reservation r
             JOIN equipment e ON r.equipmentID = e.id
             ORDER BY r.reservationID DESC

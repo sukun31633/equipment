@@ -8,7 +8,7 @@ export async function GET(req) {
             SELECT 
                 b.borrowID, b.borrowerName, b.userID, b.endDate, b.status, 
                 b.usageReason, b.document, b.courseCode,
-                e.name AS equipmentName, e.equipment_code, e.location, e.description, e.image
+                e.name AS equipmentName, e.equipment_code, e.location, e.description, e.image,e.brand
             FROM borrowing b
             JOIN equipment e ON b.equipmentID = e.id
             ORDER BY b.borrowID DESC

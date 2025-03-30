@@ -11,8 +11,9 @@ export default function BorrowEquipmentPage() {
   const equipmentID = searchParams.get("id"); // รับ `id` จาก URL
   const [equipmentName, setEquipmentName] = useState("กำลังโหลด...");
   
-  const [borrowDate, setBorrowDate] = useState("");
-  const [dueDate, setDueDate] = useState("");
+  // เปลี่ยนตัวแปรจาก borrowDate เป็น startDate และ dueDate เป็น endDate
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [courseCode, setCourseCode] = useState("");
   const [usageReason, setUsageReason] = useState("");
   const [documentFile, setDocumentFile] = useState(null);
@@ -40,29 +41,29 @@ export default function BorrowEquipmentPage() {
     }
   }, [equipmentID]);
 
-  // กำหนดวันที่ปัจจุบันให้กับวันที่ยืม
+  // กำหนดวันที่ปัจจุบันให้กับวันที่เริ่มยืม
   useEffect(() => {
-    setBorrowDate(new Date().toISOString().split("T")[0]);
+    setStartDate(new Date().toISOString().split("T")[0]);
   }, []);
 
-  // ตรวจสอบวันที่คืนว่าไม่สามารถย้อนหลังได้
+  // ตรวจสอบวันที่คืน (endDate) ว่าไม่สามารถย้อนหลังได้
   const handleSubmit = async () => {
     if (!equipmentID) {
       alert("❌ ไม่พบอุปกรณ์ที่ต้องการยืม");
       return;
     }
 
-    if (!dueDate || !courseCode || !usageReason) {
+    if (!endDate || !courseCode || !usageReason) {
       alert("⚠️ กรุณากรอกข้อมูลให้ครบถ้วน");
       return;
     }
 
-    // ตรวจสอบวันที่คืน (dueDate) ว่าไม่น้อยกว่าหรือย้อนหลังจากวันที่ยืม
-    const borrowDateObj = new Date(borrowDate);
-    const dueDateObj = new Date(dueDate);
+    // ตรวจสอบวันที่คืน (endDate) ว่าไม่น้อยกว่าวันที่เริ่มยืม (startDate)
+    const startDateObj = new Date(startDate);
+    const endDateObj = new Date(endDate);
     
-    if (dueDateObj < borrowDateObj) {
-      setError("❌ วันที่คืนไม่สามารถย้อนกลับไปก่อนวันที่ยืมได้");
+    if (endDateObj < startDateObj) {
+      setError("❌ วันที่คืนไม่สามารถย้อนกลับไปก่อนวันที่เริ่มยืมได้");
       return;
     }
 
@@ -71,8 +72,8 @@ export default function BorrowEquipmentPage() {
     setLoading(true);
     const formData = new FormData();
     formData.append("equipmentID", equipmentID);
-    formData.append("borrowDate", borrowDate);
-    formData.append("dueDate", dueDate);
+    formData.append("borrowDate", startDate); // เริ่มยืม
+    formData.append("dueDate", endDate);        // วันที่คืน (endDate)
     formData.append("courseCode", courseCode);
     formData.append("usageReason", usageReason);
     if (documentFile) {
@@ -111,16 +112,16 @@ export default function BorrowEquipmentPage() {
 
       <div className="bg-white p-8 shadow-xl rounded-xl w-full max-w-3xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* 📅 วันที่ยืมอุปกรณ์ (อัตโนมัติ) */}
+          {/* 📅 วันที่เริ่มยืม (อัตโนมัติ) */}
           <div>
-            <label className="block font-semibold mb-2 text-gray-700">📅 วันที่ยืมอุปกรณ์:</label>
-            <input type="date" value={borrowDate} disabled className="w-full border p-3 rounded shadow-sm bg-gray-200 text-gray-700" />
+            <label className="block font-semibold mb-2 text-gray-700">📅 วันที่เริ่มยืม:</label>
+            <input type="date" value={startDate} disabled className="w-full border p-3 rounded shadow-sm bg-gray-200 text-gray-700" />
           </div>
 
-          {/* 📅 วันที่คืนอุปกรณ์ */}
+          {/* 📅 วันที่คืนอุปกรณ์ (endDate) */}
           <div>
-            <label className="block font-semibold mb-2 text-gray-700">📅 วันที่คืนอุปกรณ์:</label>
-            <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="w-full border p-3 rounded shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            <label className="block font-semibold mb-2 text-gray-700">📅 วันที่คืน:</label>
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full border p-3 rounded shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             {error && <p className="text-red-600 mt-2">{error}</p>}
           </div>
         </div>

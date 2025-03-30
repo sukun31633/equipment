@@ -143,7 +143,7 @@ export default function PendingApprovalPage() {
                   📜 รายละเอียด: {item.description || "ไม่มีข้อมูล"}
                 </p>
                 <p className="text-gray-800">
-                  📅 วันคืน: {dayjs(item.dueDate).format("DD-MM-YYYY")}
+                  📅 วันคืน: {dayjs(item.endDate).format("DD-MM-YYYY")}
                 </p>
                 <p className="text-gray-800">
                   ⚠ หมายเหตุ: {item.usageReason || "ไม่มี"}

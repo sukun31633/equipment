@@ -133,7 +133,7 @@ export default function OverduePage() {
                 <p className="text-gray-800">🆔 รหัสผู้ใช้: {item.userID}</p>
                 <p className="text-gray-800">👤 ผู้ใช้: {item.borrowerName}</p>
                 <p className="text-gray-800">
-                  📅 คืนภายใน: {dayjs(item.dueDate).format("DD-MM-YYYY")}
+                  📅 คืนภายใน: {dayjs(item.endDate).format("DD-MM-YYYY")}
                 </p>
                 <p className="text-red-600 font-semibold flex items-center">
                   <AlertCircle size={18} className="mr-1" /> {item.status}

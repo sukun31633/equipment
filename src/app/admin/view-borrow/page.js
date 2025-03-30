@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Search, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Search, CheckCircle, Clock, AlertCircle, Package } from 'lucide-react';
 import AdminNavigationBar from '@/app/components/AdminNavigationBar';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -51,6 +51,7 @@ export default function BorrowingInfoPage() {
       <div className="flex justify-around w-full max-w-4xl bg-white shadow-md p-3 rounded-lg mt-6">
         {[
           { label: "รออนุมัติ", icon: Clock, path: "pending-approval", color: "text-yellow-500" },
+          { label: "รอรับอุปกรณ์", icon: Package, path: "waiting-for-delivery", color: "text-blue-500" },
           { label: "อยู่ในกำหนด", icon: CheckCircle, path: "intime", color: "text-green-500" },
           { label: "เลยกำหนด", icon: AlertCircle, path: "overdue", color: "text-red-500" },
         ].map(({ label, icon: Icon, path, color }, index) => (

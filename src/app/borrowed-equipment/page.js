@@ -69,12 +69,9 @@ export default function BorrowedEquipmentPage() {
   const combinedRequests = [...borrowRequests, ...reservationRequests];
 
   // กรองเฉพาะรายการที่มีสถานะเป็น Pending, Approved, Borrowed, หรือ Overdue
-  // เปลี่ยนเงื่อนไขการค้นหาเป็นค้นหาจากชื่ออุปกรณ์ (equipmentName)
   let filteredRequests = combinedRequests.filter((item) =>
     ["Pending", "Approved", "Borrowed", "Overdue"].includes(item.status) &&
-    (
-      (item.equipmentName || "").toLowerCase().includes(searchTerm.toLowerCase()) 
-    )
+    ((item.equipmentName || "").toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // ถ้ามี session ให้กรองเฉพาะรายการที่ตรงกับ userID ที่เข้าสู่ระบบ
@@ -138,7 +135,7 @@ export default function BorrowedEquipmentPage() {
                   )}
                   {item.endDate && (
                     <p className="text-gray-800">
-                      📅 วันรับคืน: {dayjs(item.endDate).format("DD-MM-YYYY HH:mm")}
+                      📅 วันรับคืน: {dayjs(item.endDate).format("DD-MM-YYYY")}
                     </p>
                   )}
                 </>
@@ -156,7 +153,11 @@ export default function BorrowedEquipmentPage() {
 
             return (
               <motion.div
-                key={item.borrowID || item.reservationID}
+                key={
+                  type === "borrow"
+                    ? `borrow-${item.borrowID}`
+                    : `reservation-${item.reservationID}`
+                }
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="bg-white p-6 shadow-xl rounded-xl flex items-center hover:shadow-2xl transition"
@@ -171,7 +172,7 @@ export default function BorrowedEquipmentPage() {
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-lg">
-                    {item.borrowID
+                    {type === "borrow"
                       ? `หมายเลขการยืม: ${item.borrowID}`
                       : `หมายเลขการจอง: ${item.reservationID}`}
                   </p>

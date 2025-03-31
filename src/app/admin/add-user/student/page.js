@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-// ไอคอนจาก lucide-react
 import { 
   Search, 
   ArrowLeft, 
@@ -28,7 +27,9 @@ export default function ViewStudentPage() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [showImportForm, setShowImportForm] = useState(false);
 
-  // เรียกใช้ครั้งแรกเพื่อดึงข้อมูลนักศึกษาทั้งหมด
+  // State สำหรับเลือกรหัสนักศึกษา (2 หลักแรก) เพื่อลบข้อมูล
+  const [prefix, setPrefix] = useState("");
+
   useEffect(() => {
     fetchStudents();
   }, []);
@@ -139,9 +140,9 @@ export default function ViewStudentPage() {
       const data = await res.json();
       if (data.success) {
         alert("นำเข้าข้อมูลสำเร็จ!");
-        fetchStudents();           // รีเฟรชรายชื่อ
-        setShowImportForm(false);  // ปิดฟอร์มอัปโหลด
-        setSelectedFile(null);     // เคลียร์ไฟล์
+        fetchStudents(); // รีเฟรชรายชื่อ
+        setShowImportForm(false); // ปิดฟอร์มอัปโหลด
+        setSelectedFile(null); // เคลียร์ไฟล์
       } else {
         alert("นำเข้าข้อมูลไม่สำเร็จ: " + data.message);
       }
@@ -164,7 +165,7 @@ export default function ViewStudentPage() {
           </h2>
         </div>
         <div className="flex space-x-2">
-          {/* ปุ่มเพิ่มข้อมูลผู้ใช้งาน (ไปอีกหน้าที่คุณมีอยู่เดิม) */}
+          {/* ปุ่มเพิ่มข้อมูลผู้ใช้งาน */}
           <button
             onClick={() => router.push("/admin/add-user")}
             className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 flex items-center transition"
@@ -172,7 +173,6 @@ export default function ViewStudentPage() {
             <Users size={20} className="mr-2" />
             เพิ่มข้อมูลผู้ใช้งาน
           </button>
-
           {/* ปุ่ม Import Excel */}
           <button
             onClick={() => setShowImportForm(!showImportForm)}
@@ -181,7 +181,6 @@ export default function ViewStudentPage() {
             <Upload size={20} className="mr-2" />
             นำเข้าข้อมูลนักศึกษาผ่านExcell
           </button>
-
           {/* ปุ่มลบนักศึกษาทั้งหมด */}
           <button
             onClick={handleDeleteAll}
@@ -193,6 +192,54 @@ export default function ViewStudentPage() {
         </div>
       </div>
 
+      {/* ส่วนสำหรับเลือกรหัสนักศึกษาเพื่อลบข้อมูล (Dropdown) - วางไว้ด้านบน */}
+      <div className="w-full max-w-4xl bg-white p-4 shadow-md rounded-lg mb-6">
+        <p className="font-semibold text-gray-700 mb-2">
+          เลือกรหัสนักศึกษา (2 หลักแรก) สำหรับลบข้อมูล:
+        </p>
+        <select
+          value={prefix}
+          onChange={(e) => setPrefix(e.target.value)}
+          className="w-full border p-3 rounded mb-4 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        >
+          <option value="">-- เลือกรหัส --</option>
+          {Array.from(new Set(studentList.map((student) => student.userID.toString().slice(0, 2)))).map((pfx) => (
+  <option key={pfx} value={pfx}>
+    {pfx}xxxx
+  </option>
+))}
+        </select>
+        <button
+          onClick={async () => {
+            if (!prefix) {
+              alert("กรุณาเลือกรหัสที่ต้องการลบ");
+              return;
+            }
+            if (!confirm(`คุณต้องการลบข้อมูลนักศึกษาที่ขึ้นต้นด้วย ${prefix}xxxx หรือไม่?`)) return;
+            try {
+              const res = await fetch("/api/delete-user-by-prefix", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ prefix }),
+              });
+              const data = await res.json();
+              if (data.success) {
+                alert("ลบข้อมูลเรียบร้อยแล้ว");
+                fetchStudents();
+              } else {
+                alert(`เกิดข้อผิดพลาด: ${data.message}`);
+              }
+            } catch (error) {
+              console.error(error);
+              alert("เกิดข้อผิดพลาดในการลบข้อมูล");
+            }
+          }}
+          className="w-full bg-red-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-red-600 transition mt-4"
+        >
+          ลบข้อมูลตามรหัสที่เลือก
+        </button>
+      </div>
+
       {/* ฟอร์มอัปโหลด Excel */}
       {showImportForm && (
         <div className="w-full max-w-4xl bg-white p-4 shadow-md rounded-lg mb-6">
@@ -200,7 +247,7 @@ export default function ViewStudentPage() {
             <input
               type="file"
               accept=".xlsx, .xls"
-              onChange={handleFileChange}
+              onChange={(e) => setSelectedFile(e.target.files[0])}
               className="border border-gray-300 rounded-md p-1"
             />
             <button

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react"; // Import signOut จาก next-auth
 import { Switch } from "@headlessui/react";
 import NavigationBar from "../components/NavigationBar";
 import { useSession } from "next-auth/react";
@@ -9,6 +11,7 @@ export default function ProfilePage() {
   const { data: session, status } = useSession();
   const [smsNotification, setSmsNotification] = useState(false);
   const [emailNotification, setEmailNotification] = useState(false);
+  const router = useRouter();
 
   if (status === "loading") {
     return <div className="text-center text-white mt-10">⏳ กำลังโหลดข้อมูล...</div>;
@@ -24,6 +27,8 @@ export default function ProfilePage() {
       <div className="w-full max-w-4xl p-4 bg-white shadow-lg flex items-center justify-center rounded-lg">
         <h2 className="text-2xl font-bold text-blue-700">👤 โปรไฟล์</h2>
       </div>
+
+
 
       {/* Content */}
       <div className="w-full max-w-4xl mt-6 space-y-6">
@@ -60,6 +65,15 @@ export default function ProfilePage() {
             </Switch>
           </div>
         </div>
+              {/* ปุ่มออกจากระบบ */}
+      <div className="w-full max-w-4xl mt-4 flex justify-end">
+        <button
+          onClick={() => signOut({ callbackUrl: "/" })}
+          className="bg-red-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-red-600 transition"
+        >
+          ออกจากระบบ
+        </button>
+      </div>
       </div>
 
       <NavigationBar />

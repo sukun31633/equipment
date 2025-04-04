@@ -29,6 +29,7 @@ export async function POST(req) {
       newStatus = "Rejected";
     }
 
+    // อัปเดตสถานะในตาราง borrowing หรือ reservation
     const [result] = await pool.query(
       `UPDATE ${table} SET status = ? WHERE ${column} = ?`,
       [newStatus, id]
@@ -39,6 +40,39 @@ export async function POST(req) {
         { success: false, message: "❌ ไม่พบรายการที่ต้องการอัปเดต" },
         { status: 404 }
       );
+    }
+
+    // กรณียกเลิก/ปฏิเสธ (reject/cancel) ต้องการให้อุปกรณ์กลับมาเป็น Available
+    if (action === "reject" || action === "cancel") {
+      // ดึง equipmentID จากตารางที่เกี่ยวข้อง (borrowing หรือ reservation)
+      let equipmentID;
+      if (type === "borrow") {
+        // สำหรับตาราง borrowing
+        const [rows] = await pool.query(
+          "SELECT equipmentID FROM borrowing WHERE borrowID = ?",
+          [id]
+        );
+        if (rows.length > 0) {
+          equipmentID = rows[0].equipmentID;
+        }
+      } else {
+        // สำหรับตาราง reservation
+        const [rows] = await pool.query(
+          "SELECT equipmentID FROM reservation WHERE reservationID = ?",
+          [id]
+        );
+        if (rows.length > 0) {
+          equipmentID = rows[0].equipmentID;
+        }
+      }
+
+      // หากหา equipmentID เจอ ให้เปลี่ยนสถานะอุปกรณ์เป็น Available
+      if (equipmentID) {
+        await pool.query(
+          "UPDATE equipment SET status = 'Available' WHERE id = ?",
+          [equipmentID]
+        );
+      }
     }
 
     return NextResponse.json({

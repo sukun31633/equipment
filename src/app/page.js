@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -13,6 +13,20 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
+
+  // เรียก API ตรวจสอบและอัปเดตสถานะ Overdue เมื่อหน้าล็อกอินโหลดขึ้นมา
+  useEffect(() => {
+    async function updateOverdue() {
+      try {
+        const res = await fetch("/api/update-overdue");
+        const data = await res.json();
+        console.log("Overdue update:", data.message);
+      } catch (error) {
+        console.error("Error updating overdue records:", error);
+      }
+    }
+    updateOverdue();
+  }, []);
 
   const handleLogin = async () => {
     setErrorMessage("");
@@ -31,7 +45,7 @@ export default function LoginPage() {
     if (!res || res.error) {
       setErrorMessage(res.error || "❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
     } else {
-      // ✅ ตรวจสอบ role ของผู้ใช้
+      // ตรวจสอบ role ของผู้ใช้
       const sessionRes = await fetch("/api/auth/session");
       const sessionData = await sessionRes.json();
 

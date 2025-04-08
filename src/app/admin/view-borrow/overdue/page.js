@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, ArrowLeft, AlertCircle, Download, CheckCircle } from "lucide-react";
+import { Search, ArrowLeft, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import dayjs from "dayjs";
@@ -15,30 +15,18 @@ export default function OverduePage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // ฟังก์ชันสำหรับกลับไปหน้าก่อนหน้า
   const handleBack = () => {
     router.back();
   };
 
-  // ฟังก์ชันอัปเดตสถานะ (สำหรับปุ่มคืนอุปกรณ์)
-  const updateStatus = async (id, type, action) => {
-    if (!confirm("คุณต้องการคืนอุปกรณ์สำหรับรายการนี้หรือไม่?")) return;
-    try {
-      const res = await fetch("/api/update-status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, type, action }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(data.message);
-        window.location.reload();
-      } else {
-        alert(data.message);
-      }
-    } catch (error) {
-      console.error("❌ เกิดข้อผิดพลาด:", error);
-      alert("❌ ไม่สามารถอัปเดตสถานะได้");
-    }
+  // ฟังก์ชันคืนอุปกรณ์ (นำทางไปหน้าชำระค่าปรับ)
+  const handleReturn = (id, type) => {
+    if (!confirm("คุณต้องการคืนอุปกรณ์ไปจ่ายค่าปรับหรือไม่?")) return;
+    // Debug: console.log("Navigation to:", type, id);
+    router.push(
+      `/admin/view-borrow/overdue/overdue-pay?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`
+    );
   };
 
   useEffect(() => {
@@ -61,18 +49,16 @@ export default function OverduePage() {
     fetchData();
   }, []);
 
-  // กรองเฉพาะรายการที่มีสถานะ "Overdue" สำหรับการยืม
-  const filteredBorrowRequests = borrowRequests.filter((item) =>
-    item.status === "Overdue" &&
-    (item.borrowerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     item.userID.toString().includes(searchTerm))
+  // กรองเฉพาะรายการที่มีสถานะ "Overdue" สำหรับการยืมและการจอง
+  const filteredBorrowRequests = borrowRequests.filter(
+    (item) => item.status === "Overdue" &&
+      (item.borrowerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+       item.userID.toString().includes(searchTerm))
   );
-
-  // กรองเฉพาะรายการที่มีสถานะ "Overdue" สำหรับการจอง
-  const filteredReservationRequests = reservationRequests.filter((item) =>
-    item.status === "Overdue" &&
-    (item.reserverName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     item.userID.toString().includes(searchTerm))
+  const filteredReservationRequests = reservationRequests.filter(
+    (item) => item.status === "Overdue" &&
+      (item.reserverName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+       item.userID.toString().includes(searchTerm))
   );
 
   return (
@@ -88,9 +74,7 @@ export default function OverduePage() {
           <button onClick={handleBack} className="text-red-500 mr-2">
             <ArrowLeft size={24} />
           </button>
-          <h2 className="text-lg font-semibold text-gray-800">
-            ⏰ รายการอุปกรณ์ที่เลยกำหนด
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-800">⏰ รายการอุปกรณ์ที่เลยกำหนด</h2>
         </div>
       </motion.div>
 
@@ -108,7 +92,7 @@ export default function OverduePage() {
         </button>
       </div>
 
-      {/* ส่วนแสดงรายการการยืมที่เลยกำหนด */}
+      {/* แสดงรายการยืมที่เลยกำหนด */}
       <div className="w-full max-w-3xl space-y-4">
         <h3 className="text-xl font-semibold text-gray-800">📌 รายการยืมที่เลยกำหนด</h3>
         {loading ? (
@@ -139,10 +123,10 @@ export default function OverduePage() {
                   <AlertCircle size={18} className="mr-1" /> {item.status}
                 </p>
               </div>
-              {/* ปุ่มสำหรับคืนอุปกรณ์ (สำหรับรายการยืม) */}
-              <button 
+              {/* ปุ่มสำหรับนำทางไปหน้าชำระค่าปรับ */}
+              <button
                 className="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-yellow-600 transition"
-                onClick={() => updateStatus(item.borrowID, "borrow", "return")}
+                onClick={() => handleReturn(item.borrowID, "borrow")}
               >
                 🔄 คืนอุปกรณ์
               </button>
@@ -153,7 +137,7 @@ export default function OverduePage() {
         )}
       </div>
 
-      {/* ส่วนแสดงรายการการจองที่เลยกำหนด */}
+      {/* แสดงรายการจองที่เลยกำหนด */}
       <div className="w-full max-w-3xl space-y-4 mt-6">
         <h3 className="text-xl font-semibold text-gray-800">📌 รายการจองที่เลยกำหนด</h3>
         {loading ? (
@@ -187,10 +171,10 @@ export default function OverduePage() {
                   <AlertCircle size={18} className="mr-1" /> {item.status}
                 </p>
               </div>
-              {/* ปุ่มสำหรับคืนอุปกรณ์ (สำหรับรายการจอง) */}
-              <button 
+              {/* ปุ่มสำหรับนำทางไปหน้าชำระค่าปรับ */}
+              <button
                 className="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-yellow-600 transition"
-                onClick={() => updateStatus(item.reservationID, "reservation", "return")}
+                onClick={() => handleReturn(item.reservationID, "reservation")}
               >
                 🔄 คืนอุปกรณ์
               </button>

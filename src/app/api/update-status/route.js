@@ -6,7 +6,7 @@ export async function POST(req) {
     const { id, type, action } = await req.json();
 
     // อนุญาตให้ action เป็น "approve", "reject", "confirm", หรือ "cancel"
-    if (!id || !type || !["approve", "reject", "confirm", "cancel"].includes(action)) {
+    if (!id || !type || !["approve", "reject", "confirm", "cancel", "return"].includes(action)) {
       return NextResponse.json(
         { success: false, message: "❌ ข้อมูลไม่ถูกต้อง" },
         { status: 400 }
@@ -27,27 +27,26 @@ export async function POST(req) {
       newStatus = "Borrowed";
     } else if (action === "reject" || action === "cancel") {
       newStatus = "Rejected";
-    }
+    } else if (action === "return") {
+      // เมื่อคืนอุปกรณ์ ให้เปลี่ยนสถานะเป็น "Returned"
+      newStatus = "Returned";
 
-    // อัปเดตสถานะในตาราง borrowing หรือ reservation
-    const [result] = await pool.query(
-      `UPDATE ${table} SET status = ? WHERE ${column} = ?`,
-      [newStatus, id]
-    );
-
-    if (result.affectedRows === 0) {
-      return NextResponse.json(
-        { success: false, message: "❌ ไม่พบรายการที่ต้องการอัปเดต" },
-        { status: 404 }
+      // อัปเดตสถานะในตาราง borrowing หรือ reservation เป็น "Returned"
+      const [result] = await pool.query(
+        `UPDATE ${table} SET status = ? WHERE ${column} = ?`,
+        [newStatus, id]
       );
-    }
 
-    // กรณียกเลิก/ปฏิเสธ (reject/cancel) ต้องการให้อุปกรณ์กลับมาเป็น Available
-    if (action === "reject" || action === "cancel") {
+      if (result.affectedRows === 0) {
+        return NextResponse.json(
+          { success: false, message: "❌ ไม่พบรายการที่ต้องการอัปเดต" },
+          { status: 404 }
+        );
+      }
+
       // ดึง equipmentID จากตารางที่เกี่ยวข้อง (borrowing หรือ reservation)
       let equipmentID;
       if (type === "borrow") {
-        // สำหรับตาราง borrowing
         const [rows] = await pool.query(
           "SELECT equipmentID FROM borrowing WHERE borrowID = ?",
           [id]
@@ -56,7 +55,6 @@ export async function POST(req) {
           equipmentID = rows[0].equipmentID;
         }
       } else {
-        // สำหรับตาราง reservation
         const [rows] = await pool.query(
           "SELECT equipmentID FROM reservation WHERE reservationID = ?",
           [id]
@@ -73,6 +71,19 @@ export async function POST(req) {
           [equipmentID]
         );
       }
+    }
+
+    // อัปเดตสถานะตาม action อื่นๆ
+    const [result] = await pool.query(
+      `UPDATE ${table} SET status = ? WHERE ${column} = ?`,
+      [newStatus, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return NextResponse.json(
+        { success: false, message: "❌ ไม่พบรายการที่ต้องการอัปเดต" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({

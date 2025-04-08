@@ -24,9 +24,7 @@ export default function BorrowedEquipmentPage() {
   const [reservationRequests, setReservationRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const handleBack = () => {
-    router.back();
-  };
+
 
   useEffect(() => {
     async function fetchData() {
@@ -89,9 +87,7 @@ export default function BorrowedEquipmentPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col items-center p-6 pb-24 w-full">
       {/* Header */}
       <div className="w-full max-w-4xl p-4 bg-white shadow-lg flex items-center justify-between rounded-lg">
-        <button onClick={handleBack} className="flex items-center text-blue-500">
-          <ArrowLeft size={24} className="mr-2" /> ย้อนกลับ
-        </button>
+
         <h2 className="text-2xl font-bold text-blue-700">📦 รายการอุปกรณ์</h2>
       </div>
 

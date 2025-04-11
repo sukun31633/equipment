@@ -133,7 +133,7 @@ export default function BorrowedEquipmentPage() {
           className="flex items-center bg-red-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-red-600 transition"
         >
           <Trash2 size={20} className="mr-1" />
-          ลบข้อมูลทั้งหมด (กรณีต้องการลบข้อมูลผู้ใช้งาน)
+          ลบรายการข้อมูลทั้งหมด
         </button>
       </div>
 

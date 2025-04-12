@@ -14,18 +14,23 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
 
-  // เรียก API ตรวจสอบและอัปเดตสถานะ Overdue เมื่อหน้าล็อกอินโหลดขึ้นมา
   useEffect(() => {
-    async function updateOverdue() {
+    async function updateAndCheckOverdue() {
       try {
-        const res = await fetch("/api/update-overdue");
-        const data = await res.json();
-        console.log("Overdue update:", data.message);
+        // เรียก API update overdue และรอให้เสร็จสิ้นก่อน
+        const updateRes = await fetch("/api/update-overdue");
+        const updateData = await updateRes.json();
+        console.log("Overdue update:", updateData.message);
+
+        // จากนั้นเรียก API ตรวจสอบแจ้งเตือน (check reminders)
+        const checkRes = await fetch("/api/notifications/checkReminders");
+        const checkData = await checkRes.json();
+        console.log("Check reminders:", checkData);
       } catch (error) {
-        console.error("Error updating overdue records:", error);
+        console.error("Error in update and check overdue:", error);
       }
     }
-    updateOverdue();
+    updateAndCheckOverdue();
   }, []);
 
   const handleLogin = async () => {
@@ -37,7 +42,7 @@ export default function LoginPage() {
     }
 
     const res = await signIn("credentials", {
-      redirect: false, 
+      redirect: false,
       userID,
       password,
     });
@@ -45,7 +50,7 @@ export default function LoginPage() {
     if (!res || res.error) {
       setErrorMessage(res.error || "❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
     } else {
-      // ตรวจสอบ role ของผู้ใช้
+      // ตรวจสอบ role ของผู้ใช้ และนำทางไปยังหน้าที่เหมาะสม
       const sessionRes = await fetch("/api/auth/session");
       const sessionData = await sessionRes.json();
 

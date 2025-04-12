@@ -7,20 +7,20 @@ export async function GET() {
     const currentTimestamp = new Date().toISOString();
     console.log(`Current timestamp: ${currentTimestamp}`);
 
-    // อัปเดตสถานะของรายการ Borrowed ที่เลยเวลา (endDate) ให้เป็น Overdue
+    // อัปเดตสถานะของรายการ Borrowed ที่เลยเวลา (endDate+1 วัน) ให้เป็น Overdue
     const [resultBorrow] = await pool.query(
       `UPDATE borrowing 
        SET status = 'Overdue' 
-       WHERE status = 'Borrowed' AND endDate < ?`,
+       WHERE status = 'Borrowed' AND DATE_ADD(endDate, INTERVAL 1 DAY) < ?`,
       [currentTimestamp]
     );
     console.log(`Updated borrowing: ${resultBorrow.affectedRows} record(s) to Overdue`);
 
-    // ตรวจสอบในตาราง reservation (ถ้ามีรายการที่มีสถานะ Borrowed)
+    // อัปเดตสถานะของรายการในตาราง reservation ที่มีสถานะ Borrowed เมื่อเกินเวลาคืน+1 วัน
     const [resultResv] = await pool.query(
       `UPDATE reservation 
        SET status = 'Overdue' 
-       WHERE status = 'Borrowed' AND endDate < ?`,
+       WHERE status = 'Borrowed' AND DATE_ADD(endDate, INTERVAL 1 DAY) < ?`,
       [currentTimestamp]
     );
     console.log(`Updated reservation: ${resultResv.affectedRows} record(s) to Overdue`);

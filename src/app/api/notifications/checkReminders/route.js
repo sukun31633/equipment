@@ -44,13 +44,11 @@ const sendEmail = async (email, name, subject, html) => {
   }
 };
 
-// ฟังก์ชันส่ง SMS แจ้งเตือนโดยใช้ Twilio
+// ฟังก์ชันส่ง SMS แจ้งเตือนโดยใช้ Twilio (ใช้เบอร์ทดสอบเสมอ)
 const sendSMS = async (phone, name, message) => {
-  if (!phone) {
-    console.error("ไม่พบเบอร์โทรสำหรับส่ง SMS, ใช้เบอร์ทดสอบแทน");
-    phone = "0999719451";
-  }
-  const formattedPhone = formatPhone(phone);
+  // บังคับให้ใช้เบอร์ทดสอบ ไม่ต้องพึ่งค่าที่ส่งเข้ามา
+  const testPhone = "0999719451";
+  const formattedPhone = formatPhone(testPhone);
   try {
     await twilioClient.messages.create({
       body: message,
@@ -62,6 +60,7 @@ const sendSMS = async (phone, name, message) => {
     console.error("เกิดข้อผิดพลาดในการส่ง SMS:", error);
   }
 };
+
 
 // ฟังก์ชันสำหรับดึงค่าการตั้งค่าแจ้งเตือนของผู้ใช้ผ่าน API user‑preferences
 const getUserNotificationSettings = async (userId) => {
@@ -134,7 +133,7 @@ export async function GET(req) {
           userName,
           'การแจ้งเตือน: คุณยังไม่ได้คืนอุปกรณ์',
           `<p>เรียน คุณ ${userName},</p>
-           <p>อุปกรณ์ที่คุณยืมมีวันคืนเป็น ${endDate} และเกินกำหนดคืนแล้ว (แจ้งเตือนเมื่อวันถัดไปหลังจากวันคืน) กรุณาคืนอุปกรณ์ทันที</p>
+           <p>อุปกรณ์ที่คุณยืมมีวันคืนเป็น ${endDate} และเกินกำหนดคืนแล้ว (แจ้งเตือนเมื่อวันถัดไปหลังจากวันคืน) กรุณาคืนอุปกรณ์ทันที เวลาทำการ 8:30-16:30 . </p>
            <p>ขอบคุณค่ะ!</p>`
         );
       }
@@ -142,7 +141,7 @@ export async function GET(req) {
         await sendSMS(
           phone,
           userName,
-          `สวัสดีคุณ ${userName}, อุปกรณ์ที่คุณยืมมีวันคืนเป็น ${endDate} และเกินกำหนดคืนแล้ว กรุณาคืนอุปกรณ์ทันที.`
+          `สวัสดีคุณ ${userName}, อุปกรณ์ที่คุณยืมมีวันคืนเป็น ${endDate}  และเกินกำหนดคืนแล้ว กรุณาคืนอุปกรณ์ทันที เวลาทำการ 8:30-16:30 .`
         );
       }
     }
@@ -161,7 +160,7 @@ export async function GET(req) {
           userName,
           'การแจ้งเตือน: กรุณาคืนอุปกรณ์ในวันพรุ่งนี้',
           `<p>เรียน คุณ ${userName},</p>
-           <p>นี่คือการแจ้งเตือนว่าอุปกรณ์ที่คุณยืมจะครบกำหนดคืนในวันพรุ่งนี้ (${endDate}). กรุณาคืนอุปกรณ์ตามกำหนดเวลา</p>
+           <p>นี่คือการแจ้งเตือนว่าอุปกรณ์ที่คุณยืมจะครบกำหนดคืนในวันพรุ่งนี้ (${endDate}). กรุณาคืนอุปกรณ์ตามกำหนดเวลา  เวลาทำการ 8:30-16:30 .</p>
            <p>ขอบคุณค่ะ!</p>`
         );
       }
@@ -169,7 +168,7 @@ export async function GET(req) {
         await sendSMS(
           phone,
           userName,
-          `สวัสดีคุณ ${userName}, อุปกรณ์ที่คุณยืมจะครบกำหนดคืนในวันพรุ่งนี้ (${endDate}). กรุณาคืนอุปกรณ์ตามกำหนดเวลา.`
+          `สวัสดีคุณ ${userName}, อุปกรณ์ที่คุณยืมจะครบกำหนดคืนในวันพรุ่งนี้ (${endDate}). กรุณาคืนอุปกรณ์ตามกำหนดเวลา  เวลาทำการ 8:30-16:30 .`
         );
       }
     }

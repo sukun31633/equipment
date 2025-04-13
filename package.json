@@ -24,10 +24,13 @@
     "next": "15.1.6",
     "next-auth": "^4.24.11",
     "node-cron": "^3.0.3",
+    "nodemailer": "^6.10.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.5.2",
     "react-time-picker": "^7.0.0",
+    "sib-api-v3-sdk": "^8.5.0",
+    "sparkpost": "^2.1.4",
     "twilio": "^5.4.5",
     "xlsx": "^0.18.5"
   },

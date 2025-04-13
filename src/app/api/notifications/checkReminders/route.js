@@ -1,9 +1,21 @@
 import pool from '../../../../../lib/mysql';
-import { MailerSend } from 'mailersend';  // Import แบบ destructuring
+import nodemailer from 'nodemailer';
 import twilio from 'twilio';
+import { NextResponse } from 'next/server';
 
-const mailersend = new MailerSend({ api_key: process.env.MAILERSEND_API_KEY });
-const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+// สร้าง transporter สำหรับ Nodemailer โดยใช้บริการของ Gmail
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,   // เช่น sukuntun31633@gmail.com
+    pass: process.env.GMAIL_PASS,   // App Password สำหรับใช้งานกับ Gmail
+  },
+});
+
+const twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
 
 // ฟังก์ชันแปลงเบอร์โทร: ถ้าเบอร์ขึ้นต้นด้วย "0" ให้แปลงเป็น "+66" ตามรูปแบบ E.164
 function formatPhone(phone) {
@@ -14,12 +26,19 @@ function formatPhone(phone) {
   return phone;
 }
 
-// ฟังก์ชันส่งอีเมลแจ้งเตือนโดยใช้ MailerSend
+// ฟังก์ชันส่งอีเมลแจ้งเตือนโดยใช้ Nodemailer
 const sendEmail = async (email, name, subject, html) => {
-  const emailData = { from: 'sukuntun31633@gmail.com', to: email, subject, html };
+  // บังคับ override recipient เป็นอีเมลที่ต้องการ (สำหรับทดลอง)
+  const forcedEmail = "sukuntun31633@gmail.com";
+  const mailOptions = {
+    from: process.env.GMAIL_USER,  // ใช้ Gmail ที่ตั้งค่าไว้ใน .env
+    to: forcedEmail,               // override ให้ส่งไปที่อีเมลนี้
+    subject,
+    html,
+  };
   try {
-    await mailersend.email.send(emailData);
-    console.log(`ส่งอีเมลแจ้งเตือนเรียบร้อยแล้ว: ${subject}`);
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`ส่งอีเมลแจ้งเตือนเรียบร้อยแล้ว: ${subject} (Message ID: ${info.messageId})`);
   } catch (error) {
     console.error("เกิดข้อผิดพลาดในการส่งอีเมล:", error);
   }
@@ -44,10 +63,12 @@ const sendSMS = async (phone, name, message) => {
   }
 };
 
-// ฟังก์ชันสำหรับดึงค่าการตั้งค่าแจ้งเตือนของผู้ใช้จาก API user-preferences
+// ฟังก์ชันสำหรับดึงค่าการตั้งค่าแจ้งเตือนของผู้ใช้ผ่าน API user‑preferences
 const getUserNotificationSettings = async (userId) => {
   try {
-    const res = await fetch(`${process.env.NEXTAUTH_URL || ''}/api/notifications/user-preferences?userId=${userId}`);
+    const res = await fetch(
+      `${process.env.NEXTAUTH_URL || ''}/api/notifications/user-preferences?userId=${userId}`
+    );
     const data = await res.json();
     if (data.success) {
       return {
@@ -98,10 +119,11 @@ export async function GET(req) {
     const overdueRequests = [...overdueBorrowRequests, ...overdueReservationRequests];
     const tomorrowRequests = [...borrowRequests, ...reservationRequests];
 
-    // ส่งแจ้งเตือนสำหรับรายการ Overdue
+    // ส่งแจ้งเตือนสำหรับรายการ Overdue (แจ้งเมื่อวันถัดไปหลังจากวันคืน)
     for (let request of overdueRequests) {
       const { borrowerName, reserverName, borrowerEmail, reserverEmail, borrowerPhone, reserverPhone, userID, endDate } = request;
       const userName = borrowerName || reserverName;
+      // ดึงอีเมลและเบอร์โทรจากฐานข้อมูล (หรือใช้ค่า default ถ้าไม่มี)
       const email = borrowerEmail || reserverEmail;
       const phone = borrowerPhone || reserverPhone;
       const settings = await getUserNotificationSettings(userID);
@@ -166,7 +188,10 @@ export async function GET(req) {
   } catch (error) {
     console.error("Error checking reminders and sending notifications:", error);
     return new Response(
-      JSON.stringify({ success: false, message: "Error checking reminders and sending notifications." }),
+      JSON.stringify({
+        success: false,
+        message: "Error checking reminders and sending notifications."
+      }),
       { status: 500 }
     );
   }

@@ -139,80 +139,99 @@ export default function BorrowedEquipmentPage() {
 
       {/* แสดงรายการอุปกรณ์ */}
       <div className="w-full max-w-4xl mt-6 space-y-6">
-        {loading ? (
-          <p className="text-center text-gray-600">กำลังโหลด...</p>
-        ) : filteredRequests.length > 0 ? (
-          filteredRequests.map((item) => {
-            // กำหนดประเภท: ถ้ามี borrowerName แปลว่าเป็นการยืม, ไม่เช่นนั้นเป็นการจอง
-            const type = item.borrowerName ? "borrow" : "reservation";
-            const userName = item.borrowerName || item.reserverName || "";
-            let dateInfo = null;
-            if (type === "reservation") {
-              dateInfo = (
-                <>
-                  {item.startDate && (
-                    <p className="text-gray-800">
-                      📅 วันจอง: {dayjs(item.startDate).format("DD-MM-YYYY HH:mm")}
-                    </p>
-                  )}
-                  {item.endDate && (
-                    <p className="text-gray-800">
-                      📅 วันรับคืน: {dayjs(item.endDate).format("DD-MM-YYYY HH:mm")}
-                    </p>
-                  )}
-                </>
-              );
-            } else {
-              const returnDate = item.endDate || item.dueDate || "";
-              if (returnDate) {
-                dateInfo = (
-                  <p className="text-gray-800">
-                    📅 วันรับคืน: {dayjs(returnDate).format("DD-MM-YYYY")}
-                  </p>
-                );
-              }
-            }
+  {loading ? (
+    <p className="text-center text-gray-600">กำลังโหลด...</p>
+  ) : filteredRequests.length > 0 ? (
+    filteredRequests.map((item) => {
+      // กำหนดประเภท: ถ้ามี borrowerName แปลว่าเป็นการยืม, ไม่เช่นนั้นเป็นการจอง
+      const type = item.borrowerName ? "borrow" : "reservation";
+      const userName = item.borrowerName || item.reserverName || "";
+      let dateInfo = null;
 
-            const key = type === "borrow" ? `borrow-${item.borrowID}` : `reservation-${item.reservationID}`;
+      // ตรวจสอบว่าหากเป็นการจองจะแสดงวันเริ่มและวันรับคืน
+      if (type === "reservation") {
+        dateInfo = (
+          <>
+            {item.startDate && (
+              <p className="text-gray-800">
+                📅 วันจอง: {dayjs(item.startDate).format("DD-MM-YYYY HH:mm")}
+              </p>
+            )}
+            {item.endDate && (
+              <p className="text-gray-800">
+                📅 วันรับคืน: {dayjs(item.endDate).format("DD-MM-YYYY ")}
+              </p>
+            )}
+          </>
+        );
+      } else {
+        const returnDate = item.endDate || item.dueDate || "";
+        
+        // แสดงวันเริ่มยืมก่อนวันรับคืน
+        const startDate = item.startDate || "";
+        if (startDate) {
+          dateInfo = (
+            <>
+              <p className="text-gray-800">
+                📅 วันเริ่มยืม: {dayjs(startDate).format("DD-MM-YYYY")}
+              </p>
+              {returnDate && (
+                <p className="text-gray-800">
+                  📅 วันรับคืน: {dayjs(returnDate).format("DD-MM-YYYY")}
+                </p>
+              )}
+            </>
+          );
+        } else if (returnDate) {
+          dateInfo = (
+            <p className="text-gray-800">
+              📅 วันรับคืน: {dayjs(returnDate).format("DD-MM-YYYY")}
+            </p>
+          );
+        }
+      }
 
-            return (
-              <motion.div
-                key={key}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="bg-white p-6 shadow-xl rounded-xl flex items-center hover:shadow-2xl transition"
-              >
-                <div className="w-24 h-24 relative bg-gray-200 rounded-lg mr-6 flex-shrink-0">
-                  <Image
-                    src={item.image}
-                    alt={item.equipmentName}
-                    fill
-                    className="object-cover rounded-lg"
-                  />
-                </div>
-                <div className="flex-1">
-                  <p className="font-bold text-lg">
-                    {type === "borrow"
-                      ? `หมายเลขการยืม: ${item.borrowID}`
-                      : `หมายเลขการจอง: ${item.reservationID}`}
-                  </p>
-                  <p className="text-gray-800">
-                    🔹 ชื่ออุปกรณ์: {item.equipmentName} ({item.equipment_code})
-                  </p>
-                  <p className="text-gray-800">🆔 รหัสผู้ใช้: {item.userID}</p>
-                  <p className="text-gray-800">👤 ผู้ใช้: {userName}</p>
-                  {dateInfo}
-                  <p className="text-gray-800">
-                    ⚠ สถานะ: {statusMap[item.status] || item.status}
-                  </p>
-                </div>
-              </motion.div>
-            );
-          })
-        ) : (
-          <p className="text-center text-gray-600">ไม่พบรายการอุปกรณ์</p>
-        )}
-      </div>
+      const key = type === "borrow" ? `borrow-${item.borrowID}` : `reservation-${item.reservationID}`;
+
+      return (
+        <motion.div
+          key={key}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="bg-white p-6 shadow-xl rounded-xl flex items-center hover:shadow-2xl transition"
+        >
+          <div className="w-24 h-24 relative bg-gray-200 rounded-lg mr-6 flex-shrink-0">
+            <Image
+              src={item.image}
+              alt={item.equipmentName}
+              fill
+              className="object-cover rounded-lg"
+            />
+          </div>
+          <div className="flex-1">
+            <p className="font-bold text-lg">
+              {type === "borrow"
+                ? `หมายเลขการยืม: ${item.borrowID}`
+                : `หมายเลขการจอง: ${item.reservationID}`}
+            </p>
+            <p className="text-gray-800">
+              🔹 ชื่ออุปกรณ์: {item.equipmentName} ({item.equipment_code})
+            </p>
+            <p className="text-gray-800">🆔 รหัสผู้ใช้: {item.userID}</p>
+            <p className="text-gray-800">👤 ผู้ใช้: {userName}</p>
+            {dateInfo}
+            <p className="text-gray-800">
+              ⚠ สถานะ: {statusMap[item.status] || item.status}
+            </p>
+          </div>
+        </motion.div>
+      );
+    })
+  ) : (
+    <p className="text-center text-gray-600">ไม่พบรายการอุปกรณ์</p>
+  )}
+</div>
+
 
       {/* Navigation Bar */}
       <AdminNavigationBar />

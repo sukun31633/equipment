@@ -6,7 +6,7 @@ export async function GET(req) {
         // ดึงข้อมูลรายการยืมทั้งหมด และเชื่อมกับตาราง equipment
         const [result] = await pool.query(`
             SELECT 
-                b.borrowID, b.borrowerName, b.userID, b.endDate, b.status, 
+                b.borrowID, b.borrowerName, b.userID,b.startDate, b.endDate, b.status, 
                 b.usageReason, b.document, b.courseCode,
                 e.name AS equipmentName, e.equipment_code, e.location, e.description, e.image,e.brand
             FROM borrowing b

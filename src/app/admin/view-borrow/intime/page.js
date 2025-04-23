@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Search, ArrowLeft, CheckCircle } from "lucide-react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import dayjs from "dayjs";
 import localizedFormat from "dayjs/plugin/localizedFormat";
@@ -13,33 +13,10 @@ export default function OverduePage() {
   const [borrowRequests, setBorrowRequests] = useState([]);
   const [reservationRequests, setReservationRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
+  // กดย้อนกลับ
   const handleBack = () => {
-    router.back();
-  };
-
-  // ฟังก์ชันสำหรับอัปเดตสถานะ (ปุ่ม "คืนอุปกรณ์") 
-  const updateStatus = async (id, type, action) => {
-    if (!confirm("คุณต้องการคืนอุปกรณ์สำหรับรายการนี้หรือไม่?")) return;
-
-    try {
-      const res = await fetch("/api/update-status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, type, action }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(data.message);
-        window.location.reload();
-      } else {
-        alert(data.message);
-      }
-    } catch (error) {
-      console.error("❌ เกิดข้อผิดพลาด:", error);
-      alert("❌ ไม่สามารถอัปเดตสถานะได้");
-    }
+    history.back();
   };
 
   useEffect(() => {
@@ -47,12 +24,12 @@ export default function OverduePage() {
       try {
         setLoading(true);
         const borrowRes = await fetch("/api/view-borrow");
-        const borrowData = await borrowRes.json();
+        const { success: bSucc, data: bData } = await borrowRes.json();
         const reservationRes = await fetch("/api/view-reservation");
-        const reservationData = await reservationRes.json();
+        const { success: rSucc, data: rData } = await reservationRes.json();
 
-        if (borrowData.success) setBorrowRequests(borrowData.data);
-        if (reservationData.success) setReservationRequests(reservationData.data);
+        if (bSucc) setBorrowRequests(bData);
+        if (rSucc) setReservationRequests(rData);
       } catch (error) {
         console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", error);
       } finally {
@@ -62,17 +39,18 @@ export default function OverduePage() {
     fetchData();
   }, []);
 
-  // กรองเฉพาะรายการที่มีสถานะ "Borrowed"
-  const filteredBorrowRequests = borrowRequests.filter((item) =>
-    item.status === "Borrowed" &&
-    (item.borrowerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     item.userID.toString().includes(searchTerm))
+  // กรองเฉพาะ status = Borrowed และตรงกับ searchTerm
+  const filteredBorrowRequests = borrowRequests.filter(
+    (item) =>
+      item.status === "Borrowed" &&
+      (item.borrowerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.userID.toString().includes(searchTerm))
   );
-
-  const filteredReservationRequests = reservationRequests.filter((item) =>
-    item.status === "Borrowed" &&
-    (item.reserverName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     item.userID.toString().includes(searchTerm))
+  const filteredReservationRequests = reservationRequests.filter(
+    (item) =>
+      item.status === "Borrowed" &&
+      (item.reserverName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.userID.toString().includes(searchTerm))
   );
 
   return (
@@ -82,19 +60,17 @@ export default function OverduePage() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-3xl bg-white p-4 shadow-lg flex items-center justify-between rounded-lg mb-6"
+        className="w-full max-w-3xl bg-white p-4 shadow-lg flex items-center rounded-lg mb-6"
       >
-        <div className="flex items-center">
-          <button onClick={handleBack} className="text-blue-500 mr-2">
-            <ArrowLeft size={24} />
-          </button>
-          <h2 className="text-lg font-semibold text-gray-800">
-            📌 รายการอุปกรณ์ที่ได้รับการยืนยันรับ (Borrowed)
-          </h2>
-        </div>
+        <button onClick={handleBack} className="text-blue-500 mr-2">
+          <ArrowLeft size={24} />
+        </button>
+        <h2 className="text-lg font-semibold text-gray-800">
+          📌 รายการอุปกรณ์ที่ได้รับการยืนยันรับ (Borrowed)
+        </h2>
       </motion.div>
 
-      {/* ค้นหา */}
+      {/* Search */}
       <div className="w-full max-w-3xl bg-white p-4 shadow-md rounded-lg mb-6 flex items-center">
         <input
           type="text"
@@ -108,7 +84,7 @@ export default function OverduePage() {
         </button>
       </div>
 
-      {/* ส่วนแสดงรายการการยืม (Borrow Requests) */}
+      {/* Borrow Requests */}
       <div className="w-full max-w-3xl space-y-4">
         <h3 className="text-xl font-semibold text-gray-800">📌 รายการยืม</h3>
         {loading ? (
@@ -139,21 +115,29 @@ export default function OverduePage() {
                   <CheckCircle size={18} className="mr-1" /> {item.status}
                 </p>
               </div>
-              {/* ปุ่มสำหรับคืนอุปกรณ์ (สำหรับรายการยืม) */}
-              <button 
-                className="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-yellow-600 transition"
-                onClick={() => updateStatus(item.borrowID, "borrow", "return")}
-              >
-                🔄 คืนอุปกรณ์
-              </button>
+
+              {/* ลิงก์ไปตรวจสอบอุปกรณ์ก่อนคืน */}
+              <Link
+  href={{
+    pathname: "/admin/view-borrow/intime/device-check",  // เปลี่ยนให้ตรงกับ path ที่ถูกต้อง
+    query: { type: "borrow", id: item.borrowID }, // ใช้ query parameters ตามที่ต้องการ
+  }}
+>
+  <button className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">
+    🔄 ตรวจสอบอุปกรณ์ก่อนคืน
+  </button>
+</Link>
+
             </motion.div>
           ))
         ) : (
-          <p className="text-center text-gray-600">ไม่พบรายการยืมที่ได้รับการยืนยันรับ</p>
+          <p className="text-center text-gray-600">
+            ไม่พบรายการยืมที่ได้รับการยืนยันรับ
+          </p>
         )}
       </div>
 
-      {/* ส่วนแสดงรายการการจอง (Reservation Requests) */}
+      {/* Reservation Requests */}
       <div className="w-full max-w-3xl space-y-4 mt-6">
         <h3 className="text-xl font-semibold text-gray-800">📌 รายการจอง</h3>
         {loading ? (
@@ -187,17 +171,24 @@ export default function OverduePage() {
                   <CheckCircle size={18} className="mr-1" /> {item.status}
                 </p>
               </div>
-              {/* ปุ่มสำหรับคืนอุปกรณ์ (สำหรับรายการจอง) */}
-              <button 
-                className="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-yellow-600 transition"
-                onClick={() => updateStatus(item.reservationID, "reservation", "return")}
+
+              {/* ลิงก์ไปตรวจสอบอุปกรณ์ก่อนคืน (สำหรับจอง) */}
+              <Link
+                href={{
+                  pathname: "/admin/view-borrow/intime/device-check",
+                  query: { type: "reservation", id: item.reservationID },
+                }}
               >
-                🔄 คืนอุปกรณ์
-              </button>
+                <button className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">
+                  🔄 ตรวจสอบอุปกรณ์ก่อนคืน
+                </button>
+              </Link>
             </motion.div>
           ))
         ) : (
-          <p className="text-center text-gray-600">ไม่พบรายการจองที่ได้รับการยืนยันรับ</p>
+          <p className="text-center text-gray-600">
+            ไม่พบรายการจองที่ได้รับการยืนยันรับ
+          </p>
         )}
       </div>
     </div>

@@ -8,32 +8,21 @@ import dayjs from "dayjs";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 dayjs.extend(localizedFormat);
 
-export default function OverduePayPage() {
+export default function DeviceCheckPage() {
   const [borrowRequests, setBorrowRequests] = useState([]);
   const [reservationRequests, setReservationRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
   const [status, setStatus] = useState(""); // สถานะอุปกรณ์
-  const [penaltyFee, setPenaltyFee] = useState(0); // ค่าปรับ
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // รับ query parameters ที่ส่งมาจากหน้าก่อนหน้า
-  const queryType = searchParams.get("type");
-  const queryId = searchParams.get("id");
+  const queryType = searchParams.get("type"); // 'borrow' หรือ 'reservation'
+  const queryId = searchParams.get("id");    // id ของรายการ
 
   const handleBack = () => {
     router.back();
-  };
-
-  // ฟังก์ชันคำนวณจำนวนวันที่เกินกำหนด
-  const calculateOverdueDays = (endDateStr) => {
-    const now = dayjs();
-    const due = dayjs(endDateStr);
-    if (now.isAfter(due)) {
-      return now.diff(due, "day");
-    }
-    return 0;
   };
 
   // ฟังก์ชันสำหรับตรวจสอบสถานะของอุปกรณ์
@@ -62,12 +51,12 @@ export default function OverduePayPage() {
     fetchData();
   }, []);
 
-  // กรองเฉพาะรายการที่มีสถานะ Overdue
-  const overdueBorrowRequests = borrowRequests.filter(
-    (item) => item.status === "Overdue"
+  // กรองเฉพาะรายการที่มีสถานะ Borrowed
+  const borrowedBorrowRequests = borrowRequests.filter(
+    (item) => item.status === "Borrowed"
   );
-  const overdueReservationRequests = reservationRequests.filter(
-    (item) => item.status === "Overdue"
+  const borrowedReservationRequests = reservationRequests.filter(
+    (item) => item.status === "Borrowed"
   );
 
   // ค้นหารายการที่ตรงกับ query parameters
@@ -75,11 +64,11 @@ export default function OverduePayPage() {
     let selectedItem = null;
     if (queryType && queryId) {
       if (queryType === "borrow") {
-        selectedItem = overdueBorrowRequests.find(
+        selectedItem = borrowedBorrowRequests.find(
           (item) => item.borrowID.toString() === queryId
         );
       } else if (queryType === "reservation") {
-        selectedItem = overdueReservationRequests.find(
+        selectedItem = borrowedReservationRequests.find(
           (item) => item.reservationID.toString() === queryId
         );
       }
@@ -87,47 +76,39 @@ export default function OverduePayPage() {
     if (selectedItem) {
       setSelectedItem(selectedItem);
     }
-  }, [queryType, queryId, overdueBorrowRequests, overdueReservationRequests]);
+  }, [queryType, queryId, borrowedBorrowRequests, borrowedReservationRequests]);
 
-  useEffect(() => {
-    if (selectedItem) {
-      const overdueDays = calculateOverdueDays(selectedItem.endDate);
-      const fee = overdueDays * 50; // ค่าปรับ 50 บาทต่อวัน
-      setPenaltyFee(fee);
-    }
-  }, [selectedItem]); // ทำให้ค่าปรับคำนวณใหม่เฉพาะเมื่อ selectedItem เปลี่ยน
-
-  // ฟังก์ชันสำหรับชำระค่าปรับ
-  const handlePayment = async () => {
+  // ฟังก์ชันสำหรับอัปเดตสถานะอุปกรณ์
+  const handleDeviceCheck = async () => {
     if (!selectedItem) return;
-    if (!confirm(`คุณต้องการชำระค่าปรับรวม ${penaltyFee} บาทหรือไม่?`)) return;
 
+    // ส่งข้อมูลไปอัปเดตสถานะอุปกรณ์
     try {
-      const response = await fetch("/api/update-status", {
+      const response = await fetch("/api/update-device-status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: selectedItem.borrowID || selectedItem.reservationID,
           type: queryType,
-          action: "return",
+          status, // สถานะใหม่ที่เลือก
         }),
       });
 
       const data = await response.json();
       if (data.success) {
-        alert(`ชำระค่าปรับ ${penaltyFee} บาทสำเร็จแล้ว!`);
+        alert(`อัปเดตสถานะอุปกรณ์สำเร็จ!`);
         router.push("/admin/view-borrow");
       } else {
-        alert(data.message || "เกิดข้อผิดพลาดในการชำระค่าปรับ");
+        alert("เกิดข้อผิดพลาดในการอัปเดตสถานะ");
       }
     } catch (error) {
-      console.error("เกิดข้อผิดพลาดในการชำระค่าปรับ:", error);
-      alert("❌ ไม่สามารถชำระค่าปรับได้");
+      console.error("เกิดข้อผิดพลาดในการอัปเดตสถานะ:", error);
+      alert("ไม่สามารถอัปเดตสถานะได้");
     }
   };
 
   return (
-    <div className="p-6 min-h-screen bg-gradient-to-br from-red-400 to-red-200 flex flex-col items-center">
+    <div className="p-6 min-h-screen bg-gradient-to-br from-blue-400 to-blue-200 flex flex-col items-center">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -136,10 +117,10 @@ export default function OverduePayPage() {
         className="w-full max-w-3xl bg-white p-4 shadow-lg flex items-center justify-between rounded-lg mb-6"
       >
         <div className="flex items-center">
-          <button onClick={handleBack} className="text-red-500 mr-2">
+          <button onClick={handleBack} className="text-blue-500 mr-2">
             <ArrowLeft size={24} />
           </button>
-          <h2 className="text-lg font-semibold text-gray-800">💰 ชำระค่าปรับและตรวจสอบอุปกรณ์</h2>
+          <h2 className="text-lg font-semibold text-gray-800">ตรวจสอบอุปกรณ์</h2>
         </div>
       </motion.div>
 
@@ -164,21 +145,11 @@ export default function OverduePayPage() {
           <p className="text-gray-800">
             📅 กำหนดคืน: {dayjs(selectedItem.endDate).format("DD-MM-YYYY")}
           </p>
-          <p className="text-red-600 font-semibold flex items-center">
+          <p className="text-blue-600 font-semibold flex items-center">
             <AlertCircle size={18} className="mr-1" /> {selectedItem.status}
           </p>
 
           <hr className="my-4" />
-
-          {/* ค่าปรับ */}
-          <div>
-            <p className="text-gray-800">
-              จำนวนวันที่เกินกำหนด: <span className="font-bold">{penaltyFee / 50}</span> วัน
-            </p>
-            <p className="text-gray-800">
-              ค่าปรับรวม: <span className="font-bold">{penaltyFee}</span> บาท
-            </p>
-          </div>
 
           {/* ตรวจสอบสถานะอุปกรณ์ */}
           <div className="mt-4">
@@ -213,10 +184,10 @@ export default function OverduePayPage() {
 
           {/* ปุ่มคืนอุปกรณ์ */}
           <button
-            onClick={handlePayment}
+            onClick={handleDeviceCheck}
             className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
           >
-            ชำระค่าปรับและคืนอุปกรณ์
+            ตรวจสอบอุปกรณ์
           </button>
         </div>
       ) : (

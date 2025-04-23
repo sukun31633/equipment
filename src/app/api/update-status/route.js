@@ -3,9 +3,9 @@ import pool from "../../../../lib/mysql";
 
 export async function POST(req) {
   try {
-    const { id, type, action } = await req.json();
+    const { id, type, action, status } = await req.json();
 
-    // อนุญาตให้ action เป็น "approve", "reject", "confirm", หรือ "cancel"
+    // ตรวจสอบค่าที่ส่งมาถูกต้อง
     if (!id || !type || !["approve", "reject", "confirm", "cancel", "return"].includes(action)) {
       return NextResponse.json(
         { success: false, message: "❌ ข้อมูลไม่ถูกต้อง" },
@@ -19,16 +19,12 @@ export async function POST(req) {
 
     let newStatus;
     if (action === "approve") {
-      // สำหรับการยืม ถ้าอนุมัติ ให้เปลี่ยนเป็น "Borrowed"
-      // สำหรับการจอง ถ้าอนุมัติ (แต่ไม่ได้รับอุปกรณ์แล้ว) ให้เปลี่ยนเป็น "Approved"
       newStatus = type === "borrow" ? "Borrowed" : "Approved";
     } else if (action === "confirm") {
-      // สำหรับการจอง เมื่อผู้จองรับอุปกรณ์แล้ว
       newStatus = "Borrowed";
     } else if (action === "reject" || action === "cancel") {
       newStatus = "Rejected";
     } else if (action === "return") {
-      // เมื่อคืนอุปกรณ์ ให้เปลี่ยนสถานะเป็น "Returned"
       newStatus = "Returned";
 
       // อัปเดตสถานะในตาราง borrowing หรือ reservation เป็น "Returned"
@@ -44,7 +40,7 @@ export async function POST(req) {
         );
       }
 
-      // ดึง equipmentID จากตารางที่เกี่ยวข้อง (borrowing หรือ reservation)
+      // ดึง equipmentID จากตาราง borrowing หรือ reservation
       let equipmentID;
       if (type === "borrow") {
         const [rows] = await pool.query(
@@ -64,11 +60,21 @@ export async function POST(req) {
         }
       }
 
-      // หากหา equipmentID เจอ ให้เปลี่ยนสถานะอุปกรณ์เป็น Available
+      // อัปเดตสถานะในตาราง equipment ตามที่เลือก
       if (equipmentID) {
+        let updatedStatus = "";
+        if (status === "สมบูรณ์") {
+          updatedStatus = "Available";
+        } else if (status === "ซ่อม") {
+          updatedStatus = "Repair";
+        } else if (status === "พัง") {
+          updatedStatus = "Damaged";
+        }
+
+        // อัปเดตสถานะของอุปกรณ์
         await pool.query(
-          "UPDATE equipment SET status = 'Available' WHERE id = ?",
-          [equipmentID]
+          "UPDATE equipment SET status = ? WHERE id = ?",
+          [updatedStatus, equipmentID]
         );
       }
     }
@@ -84,6 +90,21 @@ export async function POST(req) {
         { success: false, message: "❌ ไม่พบรายการที่ต้องการอัปเดต" },
         { status: 404 }
       );
+    }
+
+    // หาก action คือ reject ต้องอัปเดตสถานะของอุปกรณ์เป็น "Available"
+    if (action === "reject") {
+      const [rows] = await pool.query(
+        `SELECT equipmentID FROM ${table} WHERE ${column} = ?`,
+        [id]
+      );
+      if (rows.length > 0) {
+        const equipmentID = rows[0].equipmentID;
+        await pool.query(
+          "UPDATE equipment SET status = 'Available' WHERE id = ?",
+          [equipmentID]
+        );
+      }
     }
 
     return NextResponse.json({

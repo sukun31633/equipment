@@ -84,13 +84,14 @@ export default function DeviceCheckPage() {
 
     // ส่งข้อมูลไปอัปเดตสถานะอุปกรณ์
     try {
-      const response = await fetch("/api/update-device-status", {
+      const response = await fetch("/api/update-status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: selectedItem.borrowID || selectedItem.reservationID,
           type: queryType,
-          status, // สถานะใหม่ที่เลือก
+          action: "return", // อัพเดตเป็นการคืนอุปกรณ์
+          status, // สถานะใหม่ที่เลือก เช่น "Available", "Repair", "Damaged"
         }),
       });
 

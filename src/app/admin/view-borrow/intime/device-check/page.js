@@ -185,11 +185,16 @@ export default function DeviceCheckPage() {
 
           {/* ปุ่มคืนอุปกรณ์ */}
           <button
-            onClick={handleDeviceCheck}
-            className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
-          >
-            ตรวจสอบอุปกรณ์
-          </button>
+          onClick={handleDeviceCheck}
+           disabled={!status}
+           className={`mt-4 w-full py-2 rounded-lg text-white transition
+             ${status
+               ? "bg-green-500 hover:bg-green-600 cursor-pointer"
+               : "bg-gray-400 cursor-not-allowed"
+             }`}
+         >
+           ตรวจสอบอุปกรณ์
+         </button>
         </div>
       ) : (
         <p className="text-center text-gray-600">ไม่พบข้อมูลอุปกรณ์ที่เลือก</p>

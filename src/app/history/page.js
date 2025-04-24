@@ -155,10 +155,17 @@ export default function BorrowingHistoryPage() {
                   </p>
                   <p className="text-gray-800">🆔 รหัสผู้ใช้: {item.userID}</p>
                   <p className="text-gray-800">👤 ผู้ใช้: {userName}</p>
-                  {dateInfo}
+                  {dateInfo}                
                   <p className="text-gray-800">
                     ⚠ สถานะ: {statusMap[item.status] || item.status}
                   </p>
+                  {item.status === "Rejected" ? (
+  <p className="mt-2 text-red-600">
+    📌 เหตุผล: {item.rejection_reason || "ไม่มีรายละเอียดเพิ่มเติม"}
+  </p>
+) : null}
+
+
                 </div>
               </motion.div>
             );

@@ -41,50 +41,68 @@ export default function PendingApprovalPage() {
     fetchRequests();
   }, []);
 
-  // กรองเฉพาะรายการที่มีสถานะ "Pending" สำหรับทั้งการยืมและการจอง
   const filteredBorrowRequests = borrowRequests.filter(
     (item) =>
       item.status === "Pending" &&
       (item.borrowerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       item.userID.toString().includes(searchTerm))
+        item.userID.toString().includes(searchTerm))
   );
-
   const filteredReservationRequests = reservationRequests.filter(
     (item) =>
       item.status === "Pending" &&
       (item.reserverName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       item.userID.toString().includes(searchTerm))
+        item.userID.toString().includes(searchTerm))
   );
 
-  // ฟังก์ชันสำหรับอัปเดตสถานะการยืม/จอง
-  const updateStatus = async (id, type, action) => {
-    if (!confirm(`คุณต้องการ${action === "approve" ? "อนุมัติ" : "ปฏิเสธ"} รายการนี้หรือไม่?`))
-      return;
-
-    try {
-      const res = await fetch("/api/update-status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, type, action }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        alert(data.message);
-        window.location.reload();
-      } else {
-        alert(data.message);
+    // ฟังก์ชันอัปเดตสถานะ พร้อม prompt หาเหตุผลเมื่อปฏิเสธ
+    const updateStatus = async (id, type, action) => {
+      const confirmMsg =
+        action === "approve"
+          ? "คุณต้องการอนุมัติรายการนี้หรือไม่?"
+          : "คุณต้องการปฏิเสธรายการนี้หรือไม่?";
+      if (!confirm(confirmMsg)) return;
+  
+      let reason = "";
+      if (action === "reject") {
+        const r = prompt("กรุณากรอกหมายเหตุในการปฏิเสธรายการนี้:");
+        if (!r || !r.trim()) {
+          alert("❌ คุณต้องกรอกหมายเหตุก่อนปฏิเสธ");
+          return;
+        }
+        reason = r.trim();
       }
-    } catch (error) {
-      console.error("❌ เกิดข้อผิดพลาด:", error);
-      alert("❌ ไม่สามารถอัปเดตสถานะได้");
-    }
-  };
+  
+      try {
+        // ถ้า approve ให้เรียก API เดิม, ถ้า reject ให้ไป /api/reject-request
+        const url = action === "approve"
+          ? "/api/update-status"
+          : "/api/reject-request";
+        const payload = action === "approve"
+          ? { id, type, action }
+          : { id, type, reason };
+  
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(data.message);
+          window.location.reload();
+        } else {
+          alert(data.message);
+        }
+      } catch (error) {
+        console.error("❌ เกิดข้อผิดพลาด:", error);
+        alert("❌ ไม่สามารถอัปเดตสถานะได้");
+      }
+    };
 
   return (
     <div className="p-6 min-h-screen bg-gradient-to-br from-blue-200 to-indigo-600 flex flex-col items-center">
       {/* Header */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -94,11 +112,13 @@ export default function PendingApprovalPage() {
           <button onClick={handleBack} className="text-blue-500 mr-2">
             <ArrowLeft size={24} />
           </button>
-          <h2 className="text-lg font-semibold text-gray-800">🕒 รายการยืม/จองที่รออนุมัติ</h2>
+          <h2 className="text-lg font-semibold text-gray-800">
+            🕒 รายการยืม/จองที่รออนุมัติ
+          </h2>
         </div>
       </motion.div>
 
-      {/* ค้นหา */}
+      {/* Search */}
       <div className="w-full max-w-3xl bg-white p-4 shadow-md rounded-lg mb-6 flex items-center">
         <input
           type="text"
@@ -112,7 +132,7 @@ export default function PendingApprovalPage() {
         </button>
       </div>
 
-      {/* รายการการยืมที่รออนุมัติ */}
+      {/* Borrow Pending */}
       <div className="w-full max-w-3xl space-y-4">
         <h3 className="text-xl font-semibold text-gray-800">📌 รายการยืมที่รออนุมัติ</h3>
         {loading ? (
@@ -161,7 +181,6 @@ export default function PendingApprovalPage() {
                   </a>
                 )}
               </div>
-
               <motion.button
                 className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
                 onClick={() =>
@@ -181,13 +200,11 @@ export default function PendingApprovalPage() {
             </motion.div>
           ))
         ) : (
-          <p className="text-center text-gray-600">
-            ⏳ ไม่พบข้อมูลการยืมที่รออนุมัติ
-          </p>
+          <p className="text-center text-gray-600">⏳ ไม่พบข้อมูลการยืมที่รออนุมัติ</p>
         )}
       </div>
 
-      {/* รายการการจองที่รออนุมัติ (เฉพาะที่มีสถานะ "Pending") */}
+      {/* Reservation Pending */}
       <div className="w-full max-w-3xl space-y-4 mt-6">
         <h3 className="text-xl font-semibold text-gray-800">📌 รายการจองที่รออนุมัติ</h3>
         {loading ? (
@@ -239,7 +256,6 @@ export default function PendingApprovalPage() {
                   </a>
                 )}
               </div>
-
               <motion.button
                 className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
                 onClick={() =>
@@ -259,9 +275,7 @@ export default function PendingApprovalPage() {
             </motion.div>
           ))
         ) : (
-          <p className="text-center text-gray-600">
-            ⏳ ไม่พบรายการจองที่รออนุมัติ
-          </p>
+          <p className="text-center text-gray-600">⏳ ไม่พบรายการจองที่รออนุมัติ</p>
         )}
       </div>
     </div>

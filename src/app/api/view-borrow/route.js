@@ -7,7 +7,7 @@ export async function GET(req) {
         const [result] = await pool.query(`
             SELECT 
                 b.borrowID, b.borrowerName, b.userID,b.startDate, b.endDate, b.status, 
-                b.usageReason, b.document, b.courseCode,
+                b.usageReason, b.document, b.courseCode,b.rejection_reason,
                 e.name AS equipmentName, e.equipment_code, e.location, e.description, e.image,e.brand
             FROM borrowing b
             JOIN equipment e ON b.equipmentID = e.id

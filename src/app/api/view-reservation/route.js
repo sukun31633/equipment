@@ -7,7 +7,7 @@ export async function GET(req) {
         const [result] = await pool.query(`
             SELECT 
                 r.reservationID, r.reserverName, r.userID, r.startDate, r.endDate, r.status, 
-                r.usageReason, r.document, r.courseCode, 
+                r.usageReason, r.document, r.courseCode, r.rejection_reason,
                 e.name AS equipmentName, e.equipment_code, e.location, e.description, 
                 e.image,e.brand
             FROM reservation r

@@ -1,9 +1,11 @@
+// app/api/notifications/checkReminders/route.js
+
 import pool from '../../../../../lib/mysql';
 import nodemailer from 'nodemailer';
 import twilio from 'twilio';
 import { NextResponse } from 'next/server';
 
-// 1) สร้าง transporter สำหรับ Nodemailer โดยใช้บริการของ Gmail
+// 1) สร้าง transporter สำหรับ Nodemailer โดยใช้ Gmail
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -12,242 +14,168 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// 2) สร้าง client สำหรับ Twilio
+// 2) สร้าง Twilio client
 const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
 );
 
-/**
- * ฟังก์ชันแปลงเบอร์โทร: 
- * ถ้าเบอร์ขึ้นต้นด้วย "0" ให้เปลี่ยนเป็น "+66" เพื่อให้ถูกต้องตามรูปแบบ E.164 (Twilio)
- */
+// แปลงเบอร์โทรให้เป็น E.164 (+66...)
 function formatPhone(phone) {
-  phone = phone.trim();
-  if (phone.startsWith("0")) {
-    return "+66" + phone.slice(1);
-  }
-  return phone;
+  const p = phone.trim();
+  return p.startsWith('0') ? '+66' + p.slice(1) : p;
 }
 
-/**
- * ฟังก์ชันส่งอีเมล (Nodemailer)
- * - ในตัวอย่างนี้ override ให้ทุกอีเมลส่งไปที่ forcedEmail (สำหรับทดสอบ)
- */
-const sendEmail = async (email, userName, subject, html) => {
-  const forcedEmail = "sukuntun31633@gmail.com"; // ทดสอบ: ส่งทั้งหมดมาที่อีเมลนี้
-  const mailOptions = {
-    from: process.env.GMAIL_USER, // บัญชี Gmail ที่ตั้งค่าไว้ใน .env
-    to: forcedEmail,              // override ให้ส่งเข้าอีเมลทดสอบ
-    subject,
-    html,
-  };
+// ส่งอีเมลจริงไปยังอีเมลจากฐานข้อมูล
+async function sendEmail(to, subject, html) {
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`ส่งอีเมลแจ้งเตือนเรียบร้อยแล้ว: ${subject} (Message ID: ${info.messageId})`);
-  } catch (error) {
-    console.error("เกิดข้อผิดพลาดในการส่งอีเมล:", error);
-  }
-};
-
-/**
- * ฟังก์ชันส่ง SMS (Twilio)
- * - ในตัวอย่าง override เบอร์โทรเป็นของทดสอบ (Twilio Trial) เช่น "0999719451"
- */
-const sendSMS = async (phone, userName, message) => {
-  const testPhone = "0999719451"; // สำหรับทดสอบ
-  const formattedPhone = formatPhone(testPhone);
-  try {
-    const result = await twilioClient.messages.create({
-      body: message,
-      from: process.env.TWILIO_PHONE_NUMBER, // หมายเลข Twilio ที่ผูกไว้
-      to: formattedPhone,
+    await transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to,      // ← ส่งไปยังอีเมลของผู้ใช้ที่ดึงจากตาราง user
+      subject,
+      html,
     });
-    console.log(`ส่ง SMS แจ้งเตือนเรียบร้อยแล้ว: ${message}`);
-    console.log("Twilio Response:", result);
-  } catch (error) {
-    console.error("เกิดข้อผิดพลาดในการส่ง SMS:", error);
-  }
-};
-
-/**
- * ฟังก์ชันดึงค่าการตั้งค่าแจ้งเตือนของผู้ใช้ (userID = 641372) จากตาราง user
- * - เช็คคอลัมน์: smsNotification, emailNotification
- */
-async function getUserNotificationSettings(userId) {
-  // ตรวจสอบว่า userId ตรงกับ 641372 หรือไม่
-  if (userId !== 641372) {
-    // ถ้าไม่ใช่ 641372 อาจไม่ต้องส่งหรือ return disabled ทั้งสอง
-    return { sms: "disabled", email: "disabled" };
-  }
-
-  try {
-    const [rows] = await pool.query(`
-      SELECT smsNotification, emailNotification
-      FROM user
-      WHERE userID = ?
-    `, [userId]);
-
-    if (!rows || rows.length === 0) {
-      // ไม่พบ user
-      return { sms: "disabled", email: "disabled" };
-    }
-
-    const row = rows[0];
-    // สมมติว่าใน DB เก็บค่าเป็น 'enabled'/'disabled' อยู่แล้ว
-    // หากเก็บเป็น 1/0 หรือ boolean ต้อง map ใหม่เป็น "enabled"/"disabled"
-    return {
-      sms: row.smsNotification || "disabled",      // ถ้าค่าว่างให้ถือว่า disabled
-      email: row.emailNotification || "disabled",  // ถ้าค่าว่างให้ถือว่า disabled
-    };
-  } catch (error) {
-    console.error("Error fetching user notification settings:", error);
-    return { sms: "disabled", email: "disabled" };
+    console.log(`✅ Email sent to ${to}: ${subject}`);
+  } catch (err) {
+    console.error(`❌ Failed to send email to ${to}:`, err);
   }
 }
 
-/**
- * API หลักสำหรับดึงรายการ Overdue / Borrowed แล้วส่งแจ้งเตือน (Email, SMS)
- */
-export async function GET(req) {
+// ส่ง SMS ไปยังเบอร์ทดสอบคงที่
+async function sendSMS(message) {
+  const TEST_PHONE = '0999719451';
+  const to = formatPhone(TEST_PHONE);
+  try {
+    await twilioClient.messages.create({
+      body: message,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to,
+    });
+    console.log(`✅ SMS sent to ${to}: ${message}`);
+  } catch (err) {
+    console.error(`❌ Failed to send SMS to ${to}:`, err);
+  }
+}
+
+// อ่าน setting ว่า user ปิด/เปิด แจ้งเตือน
+async function getUserNotificationSettings(userID) {
+  try {
+    const [rows] = await pool.query(
+      `SELECT smsNotification, emailNotification
+       FROM user
+       WHERE userID = ?`,
+      [userID]
+    );
+    if (!rows.length) return { sms: 'disabled', email: 'disabled' };
+    const { smsNotification, emailNotification } = rows[0];
+    return {
+      sms: smsNotification === 'enabled' ? 'enabled' : 'disabled',
+      email: emailNotification === 'enabled' ? 'enabled' : 'disabled',
+    };
+  } catch (err) {
+    console.error('Error fetching notification settings:', err);
+    return { sms: 'disabled', email: 'disabled' };
+  }
+}
+
+export async function GET() {
   try {
     const today = new Date();
-    const yesterday = new Date();
+    const fmt = d => d.toISOString().slice(0, 10);
+    const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-    const tomorrow = new Date();
+    const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
 
-    const formatDate = (date) => date.toISOString().split("T")[0];
-    const yesterdayFormatted = formatDate(yesterday);
-    const tomorrowFormatted = formatDate(tomorrow);
+    const dY = fmt(yesterday), dT = fmt(tomorrow);
 
-    // 1) Query ข้อมูลจากตาราง borrowing
-    const [overdueBorrow] = await pool.query(`
-      SELECT * 
-      FROM borrowing 
-      WHERE DATE(endDate) = ? 
-        AND status = "Overdue"
-    `, [yesterdayFormatted]);
-    const [borrowTomorrow] = await pool.query(`
-      SELECT *
-      FROM borrowing
-      WHERE DATE(endDate) = ?
-        AND status = "Borrowed"
-    `, [tomorrowFormatted]);
-
-    // 2) Query ข้อมูลจากตาราง reservation
-    const [overdueReservation] = await pool.query(`
-      SELECT *
-      FROM reservation
-      WHERE DATE(endDate) = ?
-        AND status = "Overdue"
-    `, [yesterdayFormatted]);
-    const [reservationTomorrow] = await pool.query(`
-      SELECT *
-      FROM reservation
-      WHERE DATE(endDate) = ?
-        AND status = "Borrowed"
-    `, [tomorrowFormatted]);
-
-    // รวมรายการ Overdue กับ Borrowed (2 ประเภท) เข้าด้วยกัน
-    const overdueRequests = [...overdueBorrow, ...overdueReservation];
-    const tomorrowRequests = [...borrowTomorrow, ...reservationTomorrow];
-
-    // === ส่วน Overdue ===
-    for (let reqItem of overdueRequests) {
-      const {
-        borrowerName,
-        reserverName,
-        borrowerEmail,
-        reserverEmail,
-        borrowerPhone,
-        reserverPhone,
-        userID,
-        endDate,
-      } = reqItem;
-      const userName = borrowerName || reserverName;
-      const email = borrowerEmail || reserverEmail; 
-      const phone = borrowerPhone || reserverPhone;
-
-      // เรียกฟังก์ชันเช็คว่าผู้ใช้เปิด/ปิดการแจ้งเตือน
-      const settings = await getUserNotificationSettings(userID);
-
-      // ตรวจสอบค่า email/smsNotification = "enabled" ?
-      if (settings.email === "enabled") {
-        await sendEmail(
-          email,
-          userName,
-          "การแจ้งเตือน: คุณยังไม่ได้คืนอุปกรณ์",
-          `<p>เรียน คุณ ${userName},</p>
-           <p>อุปกรณ์ที่คุณยืมมีวันคืนเป็น ${endDate} และเกินกำหนดคืนแล้ว 
-              (แจ้งเตือนเมื่อวันถัดไปหลังจากวันคืน) 
-              กรุณาคืนอุปกรณ์ทันที ภายในเวลาทำการ 8:30 - 16:30.</p>
-           <p>ขอบคุณค่ะ!</p>`
-        );
-      }
-
-      if (settings.sms === "enabled") {
-        await sendSMS(
-          phone,
-          userName,
-          `สวัสดีคุณ ${userName}, อุปกรณ์ที่คุณยืม (end: ${endDate}) เกินกำหนดแล้ว กรุณาคืนทันที.`
-        );
-      }
-    }
-
-    // === ส่วน Borrowed (เตือนให้คืนพรุ่งนี้) ===
-    for (let reqItem of tomorrowRequests) {
-      const {
-        borrowerName,
-        reserverName,
-        borrowerEmail,
-        reserverEmail,
-        borrowerPhone,
-        reserverPhone,
-        userID,
-        endDate,
-      } = reqItem;
-      const userName = borrowerName || reserverName;
-      const email = borrowerEmail || reserverEmail; 
-      const phone = borrowerPhone || reserverPhone;
-
-      const settings = await getUserNotificationSettings(userID);
-
-      if (settings.email === "enabled") {
-        await sendEmail(
-          email,
-          userName,
-          "การแจ้งเตือน: กรุณาคืนอุปกรณ์ในวันพรุ่งนี้",
-          `<p>เรียน คุณ ${userName},</p>
-           <p>อุปกรณ์ที่คุณยืมจะครบกำหนดคืนในวันพรุ่งนี้ (${endDate}). 
-              กรุณาคืนอุปกรณ์ตามกำหนดเวลา (8:30 - 16:30).</p>
-           <p>ขอบคุณค่ะ!</p>`
-        );
-      }
-
-      if (settings.sms === "enabled") {
-        await sendSMS(
-          phone,
-          userName,
-          `สวัสดีคุณ ${userName}, อุปกรณ์ที่ยืม (end: ${endDate}) จะครบกำหนดคืนพรุ่งนี้ โปรดคืนตามกำหนด.`
-        );
-      }
-    }
-
-    return new NextResponse(
-      JSON.stringify({
-        success: true,
-        message: "Reminders checked and notifications sent (if applicable).",
-      }),
-      { status: 200 }
+    // ดึง Overdue เมื่อวาน พร้อม JOIN ดึงอีเมลจาก user
+    const [overdueBorrow] = await pool.query(
+      `SELECT b.*, u.email AS userEmail, u.userID
+       FROM borrowing b
+       JOIN user u ON b.userID = u.userID
+       WHERE DATE(b.endDate)=? AND b.status='Overdue'`,
+      [dY]
     );
-  } catch (error) {
-    console.error("Error checking reminders and sending notifications:", error);
-    return new NextResponse(
-      JSON.stringify({
-        success: false,
-        message: "Error checking reminders and sending notifications.",
-      }),
+    const [overdueRes] = await pool.query(
+      `SELECT r.*, u.email AS userEmail, u.userID
+       FROM reservation r
+       JOIN user u ON r.userID = u.userID
+       WHERE DATE(r.endDate)=? AND r.status='Overdue'`,
+      [dY]
+    );
+
+    // ดึงจะครบกำหนดคืนพรุ่งนี้ พร้อม JOIN ดึงอีเมลจาก user
+    const [borrowTomorrow] = await pool.query(
+      `SELECT b.*, u.email AS userEmail, u.userID
+       FROM borrowing b
+       JOIN user u ON b.userID = u.userID
+       WHERE DATE(b.endDate)=? AND b.status='Borrowed'`,
+      [dT]
+    );
+    const [resTomorrow] = await pool.query(
+      `SELECT r.*, u.email AS userEmail, u.userID
+       FROM reservation r
+       JOIN user u ON r.userID = u.userID
+       WHERE DATE(r.endDate)=? AND r.status='Borrowed'`,
+      [dT]
+    );
+
+    const overdueList = [...overdueBorrow, ...overdueRes];
+    const reminderList = [...borrowTomorrow, ...resTomorrow];
+
+    // 1) แจ้งเตือน Overdue
+    for (const item of overdueList) {
+      const name  = item.borrowerName  || item.reserverName;
+      const email = item.userEmail;      // ← ใช้ email จาก user table
+      const settings = await getUserNotificationSettings(item.userID);
+
+      if (settings.email === 'enabled') {
+        await sendEmail(
+          email,
+          '🔔 แจ้งเตือน: เกินกำหนดคืนอุปกรณ์',
+          `<p>เรียน คุณ ${name},</p>
+           <p>อุปกรณ์ครบกำหนดคืนเมื่อ ${item.endDate} และยังไม่คืน</p>
+           <p>กรุณาคืนอุปกรณ์โดยด่วน</p>`
+        );
+      }
+      if (settings.sms === 'enabled') {
+        await sendSMS(
+          `📱 คุณ ${name}, อุปกรณ์ครบกำหนดคืน ${item.endDate} เกินกำหนดแล้ว กรุณาคืนทันที`
+        );
+      }
+    }
+
+    // 2) แจ้งเตือนจะครบกำหนดคืนพรุ่งนี้
+    for (const item of reminderList) {
+      const name  = item.borrowerName  || item.reserverName;
+      const email = item.userEmail;
+      const settings = await getUserNotificationSettings(item.userID);
+
+      if (settings.email === 'enabled') {
+        await sendEmail(
+          email,
+          '🔔 แจ้งเตือน: คืนอุปกรณ์พรุ่งนี้',
+          `<p>เรียน คุณ ${name},</p>
+           <p>อุปกรณ์จะครบกำหนดคืนพรุ่งนี้ (${item.endDate})</p>
+           <p>กรุณาคืนตามกำหนด</p>`
+        );
+      }
+      if (settings.sms === 'enabled') {
+        await sendSMS(
+          `📱 คุณ ${name}, อุปกรณ์จะครบกำหนดคืนพรุ่งนี้ (${item.endDate}) โปรดคืนตามกำหนด`
+        );
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Notifications processed',
+    });
+  } catch (err) {
+    console.error('Error in checkReminders:', err);
+    return NextResponse.json(
+      { success: false, message: err.message },
       { status: 500 }
     );
   }

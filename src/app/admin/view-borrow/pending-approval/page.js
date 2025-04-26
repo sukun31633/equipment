@@ -54,50 +54,63 @@ export default function PendingApprovalPage() {
         item.userID.toString().includes(searchTerm))
   );
 
-    // ฟังก์ชันอัปเดตสถานะ พร้อม prompt หาเหตุผลเมื่อปฏิเสธ
-    const updateStatus = async (id, type, action) => {
-      const confirmMsg =
-        action === "approve"
-          ? "คุณต้องการอนุมัติรายการนี้หรือไม่?"
-          : "คุณต้องการปฏิเสธรายการนี้หรือไม่?";
-      if (!confirm(confirmMsg)) return;
-  
-      let reason = "";
-      if (action === "reject") {
-        const r = prompt("กรุณากรอกหมายเหตุในการปฏิเสธรายการนี้:");
-        if (!r || !r.trim()) {
-          alert("❌ คุณต้องกรอกหมายเหตุก่อนปฏิเสธ");
-          return;
-        }
-        reason = r.trim();
+  // อัปเดตสถานะ พร้อมเรียกแจ้งเตือนให้ผู้ใช้เมื่อ "อนุมัติ" หรือ "ปฏิเสธ"
+  // เพิ่ม parameter userID และ equipmentName ให้ส่งไปแจ้งเตือน
+  const updateStatus = async (id, type, action, userID, equipmentName) => {
+    const confirmMsg =
+      action === "approve"
+        ? "คุณต้องการอนุมัติรายการนี้หรือไม่?"
+        : "คุณต้องการปฏิเสธรายการนี้หรือไม่?";
+    if (!confirm(confirmMsg)) return;
+
+    let reason = "";
+    if (action === "reject") {
+      const r = prompt("กรุณากรอกหมายเหตุในการปฏิเสธรายการนี้:");
+      if (!r || !r.trim()) {
+        alert("❌ คุณต้องกรอกหมายเหตุก่อนปฏิเสธ");
+        return;
       }
-  
-      try {
-        // ถ้า approve ให้เรียก API เดิม, ถ้า reject ให้ไป /api/reject-request
-        const url = action === "approve"
-          ? "/api/update-status"
-          : "/api/reject-request";
-        const payload = action === "approve"
+      reason = r.trim();
+    }
+
+    try {
+      // สำหรับ approve ใช้ /api/update-status, สำหรับ reject ใช้ /api/reject-request
+      const url = action === "approve" ? "/api/update-status" : "/api/reject-request";
+      const payload =
+        action === "approve"
           ? { id, type, action }
           : { id, type, reason };
-  
-        const res = await fetch(url, {
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        // เมื่ออัปเดตสถานะสำเร็จ ให้เรียก API แจ้งเตือน (approvalStatus)
+        const notificationPayload = {
+          userID,
+          equipmentName,
+          status: action === "approve" ? "approved" : "rejected",
+          type,
+        };
+        await fetch("/api/notifications/approvalStatus", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(notificationPayload),
         });
-        const data = await res.json();
-        if (data.success) {
-          alert(data.message);
-          window.location.reload();
-        } else {
-          alert(data.message);
-        }
-      } catch (error) {
-        console.error("❌ เกิดข้อผิดพลาด:", error);
-        alert("❌ ไม่สามารถอัปเดตสถานะได้");
+        alert(data.message);
+        window.location.reload();
+      } else {
+        alert(data.message);
       }
-    };
+    } catch (error) {
+      console.error("❌ เกิดข้อผิดพลาด:", error);
+      alert("❌ ไม่สามารถอัปเดตสถานะได้");
+    }
+  };
 
   return (
     <div className="p-6 min-h-screen bg-gradient-to-br from-blue-200 to-indigo-600 flex flex-col items-center">
@@ -183,8 +196,15 @@ export default function PendingApprovalPage() {
               </div>
               <motion.button
                 className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
+                // ส่งข้อมูลเพิ่มเติม: userID และ equipmentName ที่ต้องใช้ในการแจ้งเตือน
                 onClick={() =>
-                  updateStatus(item.borrowID, "borrow", "approve")
+                  updateStatus(
+                    item.borrowID,
+                    "borrow",
+                    "approve",
+                    item.userID,
+                    item.equipmentName
+                  )
                 }
               >
                 ✅ อนุมัติ
@@ -192,7 +212,13 @@ export default function PendingApprovalPage() {
               <motion.button
                 className="bg-red-400 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition ml-2"
                 onClick={() =>
-                  updateStatus(item.borrowID, "borrow", "reject")
+                  updateStatus(
+                    item.borrowID,
+                    "borrow",
+                    "reject",
+                    item.userID,
+                    item.equipmentName
+                  )
                 }
               >
                 ❌ ปฏิเสธ
@@ -259,7 +285,13 @@ export default function PendingApprovalPage() {
               <motion.button
                 className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
                 onClick={() =>
-                  updateStatus(item.reservationID, "reservation", "approve")
+                  updateStatus(
+                    item.reservationID,
+                    "reservation",
+                    "approve",
+                    item.userID,
+                    item.equipmentName
+                  )
                 }
               >
                 ✅ อนุมัติ
@@ -267,7 +299,13 @@ export default function PendingApprovalPage() {
               <motion.button
                 className="bg-red-400 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition ml-2"
                 onClick={() =>
-                  updateStatus(item.reservationID, "reservation", "reject")
+                  updateStatus(
+                    item.reservationID,
+                    "reservation",
+                    "reject",
+                    item.userID,
+                    item.equipmentName
+                  )
                 }
               >
                 ❌ ปฏิเสธ

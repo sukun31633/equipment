@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";  // ✅ เพิ่ม useSession
 import { ArrowLeft } from "lucide-react";
 
 export default function BorrowEquipmentPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+  const { data: session } = useSession();  // ✅ ดึง session
+
   const equipmentID = searchParams.get("id"); // รับ `id` จาก URL
   const [equipmentName, setEquipmentName] = useState("กำลังโหลด...");
-  
-  // เปลี่ยนตัวแปรจาก borrowDate เป็น startDate และ dueDate เป็น endDate
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [courseCode, setCourseCode] = useState("");
@@ -20,7 +20,6 @@ export default function BorrowEquipmentPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ใช้ useEffect เพื่อดึงข้อมูลชื่ออุปกรณ์จาก API
   useEffect(() => {
     if (equipmentID) {
       const fetchEquipment = async () => {
@@ -28,7 +27,7 @@ export default function BorrowEquipmentPage() {
           const res = await fetch(`/api/view-equipment?id=${equipmentID}`);
           const data = await res.json();
           if (data.success && data.data.length > 0) {
-            setEquipmentName(data.data[0].name);  // ตั้งชื่ออุปกรณ์จาก API
+            setEquipmentName(data.data[0].name);
           } else {
             setEquipmentName("ไม่พบข้อมูลอุปกรณ์");
           }
@@ -41,12 +40,10 @@ export default function BorrowEquipmentPage() {
     }
   }, [equipmentID]);
 
-  // กำหนดวันที่ปัจจุบันให้กับวันที่เริ่มยืม
   useEffect(() => {
     setStartDate(new Date().toISOString().split("T")[0]);
   }, []);
 
-  // ตรวจสอบวันที่คืน (endDate) ว่าไม่สามารถย้อนหลังได้
   const handleSubmit = async () => {
     if (!equipmentID) {
       alert("❌ ไม่พบอุปกรณ์ที่ต้องการยืม");
@@ -58,37 +55,61 @@ export default function BorrowEquipmentPage() {
       return;
     }
 
-    // ตรวจสอบวันที่คืน (endDate) ว่าไม่น้อยกว่าวันที่เริ่มยืม (startDate)
     const startDateObj = new Date(startDate);
     const endDateObj = new Date(endDate);
-    
+
     if (endDateObj < startDateObj) {
       setError("❌ วันที่คืนไม่สามารถย้อนกลับไปก่อนวันที่เริ่มยืมได้");
       return;
     }
 
-    setError("");  // รีเซ็ตข้อความข้อผิดพลาด
+    if (!session?.user) {
+      alert("❌ กรุณาเข้าสู่ระบบก่อนทำการยืมอุปกรณ์");
+      return;
+    }
 
+    const reserverName = session.user.name || "ไม่ทราบชื่อ";
+    const userID = session.user.id || "ไม่ทราบรหัส";
+
+    setError("");
     setLoading(true);
+
     const formData = new FormData();
     formData.append("equipmentID", equipmentID);
-    formData.append("borrowDate", startDate); // เริ่มยืม
-    formData.append("dueDate", endDate);        // วันที่คืน (endDate)
+    formData.append("borrowDate", startDate);
+    formData.append("dueDate", endDate);
     formData.append("courseCode", courseCode);
     formData.append("usageReason", usageReason);
+    formData.append("userID", userID);               // ✅ ใส่ userID
+    formData.append("borrowerName", reserverName);   // ✅ ใส่ชื่อผู้ยืม
     if (documentFile) {
       formData.append("document", documentFile);
     }
 
     try {
+      // 1. บันทึกข้อมูลการยืม
       const response = await fetch("/api/borrow", {
         method: "POST",
         body: formData,
       });
 
       const result = await response.json();
+
       if (result.success) {
-        alert("✅ การยืมอุปกรณ์สำเร็จ!");
+        // 2. ถ้ายืมสำเร็จ → เรียกแจ้งเตือน
+        await fetch("/api/notifications/newRequest", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            equipmentID: equipmentID,
+            reserverName: reserverName,   // ✅ ส่งชื่อจริง
+            type: "borrow",
+          }),
+        });
+
+        alert("✅ การยืมอุปกรณ์สำเร็จและแจ้งเตือนเจ้าหน้าที่แล้ว!");
         router.push("/borrowed-equipment");
       } else {
         alert("❌ เกิดข้อผิดพลาด: " + result.message);
@@ -108,43 +129,42 @@ export default function BorrowEquipmentPage() {
       </button>
 
       <h1 className="text-3xl font-bold text-white mb-2 text-center">🔄 ยืมอุปกรณ์ตอนนี้</h1>
-      <h2 className="text-lg font-semibold text-white mb-6 text-center">🛠 {equipmentName}</h2>
+      <h2 className="text-lg font-semibold text-white mb-2 text-center">🛠 {equipmentName}</h2>
+
+      {/* ✅ แสดงชื่อผู้ใช้งาน */}
+      <h2 className="text-lg font-semibold text-white mb-6 text-center">
+        🙋‍♂️ ผู้ใช้งาน: {session?.user?.name || "ไม่ทราบชื่อ"}
+      </h2>
 
       <div className="bg-white p-8 shadow-xl rounded-xl w-full max-w-3xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* 📅 วันที่เริ่มยืม (อัตโนมัติ) */}
           <div>
             <label className="block font-semibold mb-2 text-gray-700">📅 วันที่เริ่มยืม:</label>
             <input type="date" value={startDate} disabled className="w-full border p-3 rounded shadow-sm bg-gray-200 text-gray-700" />
           </div>
 
-          {/* 📅 วันที่คืนอุปกรณ์ (endDate) */}
           <div>
-            <label className="block font-semibold mb-2 text-gray-700">📅 วันที่คืน:</label>
+            <label className="block font-semibold mb-2 text-gray-700">📅 วันที่คืน:*</label>
             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full border p-3 rounded shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             {error && <p className="text-red-600 mt-2">{error}</p>}
           </div>
         </div>
 
-        {/* 📚 รหัสวิชาที่ยืม */}
         <div>
-          <label className="block font-semibold mb-2 text-gray-700">📚 รหัสวิชาที่ยืม:</label>
+          <label className="block font-semibold mb-2 text-gray-700">📚 รหัสวิชาที่ยืม:*</label>
           <input type="text" placeholder="กรอกรหัสวิชา (เช่น CS1012, IT2050)" value={courseCode} onChange={(e) => setCourseCode(e.target.value)} className="w-full border p-3 rounded shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
         </div>
 
-        {/* 📝 อธิบายการใช้งาน */}
         <div className="mt-4">
-          <label className="block font-semibold mb-2 text-gray-700">📝 อธิบายการใช้งาน:</label>
+          <label className="block font-semibold mb-2 text-gray-700">📝 อธิบายการใช้งาน:*</label>
           <textarea placeholder="กรอกเหตุผลและรายละเอียดเกี่ยวกับการใช้อุปกรณ์..." value={usageReason} onChange={(e) => setUsageReason(e.target.value)} rows="3" className="w-full border p-3 rounded shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none" />
         </div>
 
-        {/* 📄 อัปโหลดเอกสารการอนุญาต */}
         <div className="mt-4">
-          <label className="block font-semibold mb-2 text-gray-700">📄 อัปโหลดเอกสารการอนุญาต (ในกรณียืมมากกว่า 7 วัน)</label>
+          <label className="block font-semibold mb-2 text-gray-700">📄 อัปโหลดเอกสารการอนุญาต (ถ้ามี)</label>
           <input type="file" onChange={(e) => setDocumentFile(e.target.files[0])} className="w-full border p-3 rounded shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
         </div>
 
-        {/* 💾 ปุ่มบันทึก */}
         <button onClick={handleSubmit} className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-3 px-6 rounded-lg w-full text-lg font-semibold shadow-md hover:shadow-lg hover:from-blue-600 hover:to-indigo-600 transition mt-6 disabled:opacity-50" disabled={loading}>
           {loading ? "⏳ กำลังบันทึก..." : "💾 บันทึก"}
         </button>

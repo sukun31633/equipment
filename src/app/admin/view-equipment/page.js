@@ -123,7 +123,7 @@ export default function EquipmentListPage() {
       className="flex items-center bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-4 py-2 rounded-lg shadow-lg transition ml-4"
     >
       <BarChart2 size={18} className="mr-2" />
-      สถิติอุปกรณ์
+      สรุปอุปกรณ์
     </button>
         </div>
       </div>

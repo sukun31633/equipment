@@ -40,7 +40,7 @@ export async function GET(req) {
             JOIN equipment e ON t.equipmentID = e.id
           GROUP BY e.id, e.name, e.equipment_code
           ORDER BY usageCount DESC
-          LIMIT 10
+         
           `,
           [since, since]
         );

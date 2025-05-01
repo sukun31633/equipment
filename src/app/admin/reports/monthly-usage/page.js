@@ -1,7 +1,9 @@
 "use client";
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import {
   BarChart,
   Bar,
@@ -11,205 +13,213 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   LabelList,
-  Legend,
 } from "recharts";
-import { motion } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
-
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
 
 const SPAN_OPTIONS = [
-  { label: "1 วัน", value: 1, unit: "day" },
-  { label: "1 สัปดาห์", value: 1, unit: "week" },
-  { label: "1 เดือน", value: 1, unit: "month" },
-  { label: "3 เดือน", value: 3, unit: "month" },
-  { label: "6 เดือน", value: 6, unit: "month" },
-  { label: "12 เดือน", value: 12, unit: "month" },
+  { label: "1 วัน", value: 1, unit: "day", key: "1 วัน" },
+  { label: "1 สัปดาห์", value: 1, unit: "week", key: "1 สัปดาห์" },
+  { label: "1 เดือน", value: 1, unit: "month", key: "1 เดือน" },
+  { label: "3 เดือน", value: 3, unit: "month", key: "3 เดือน" },
+  { label: "6 เดือน", value: 6, unit: "month", key: "6 เดือน" },
+  { label: "12 เดือน", value: 12, unit: "month", key: "12 เดือน" },
 ];
 
-export default function TopEquipmentReportPage() {
+export default function AllEquipmentUsagePage() {
   const router = useRouter();
-  const [{ value: span, unit }, setSpanUnit] = useState({ value: 6, unit: "month" });
-  const [data, setData] = useState([]);
+  const [spanKey, setSpanKey] = useState("6 เดือน");
+  const [dataBySpan, setDataBySpan] = useState({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    async function fetchData() {
+    async function loadAll() {
       setLoading(true);
-      setError("");
       try {
-        const res = await fetch(`/api/report?span=${span}&unit=${unit}&type=topEquipment`);
+        const res = await fetch("/api/report?type=topEquipmentAll");
         const json = await res.json();
-        if (!json.success) throw new Error(json.message || "ไม่สามารถดึงข้อมูลรายงานได้");
-        setData(
-          json.data.map((item) => ({
-            ...item,
-            equipmentLabel: `${item.equipmentName} (${item.equipmentCode})`,
-          }))
-        );
+        if (json.success) setDataBySpan(json.data);
       } catch (err) {
         console.error(err);
-        setError("เกิดข้อผิดพลาดในการโหลดข้อมูลรายงาน");
       } finally {
         setLoading(false);
       }
     }
-    fetchData();
-  }, [span, unit]);
+    loadAll();
+  }, []);
 
-  // Export current span
-  const handleExportExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(
-      data.map((item) => ({
-        "รหัสอุปกรณ์": item.equipmentCode,
-        "ชื่ออุปกรณ์": item.equipmentName,
-        "จำนวนครั้งใช้งาน": item.usageCount,
+  // แปลงข้อมูล+กรอง
+  const allRows = dataBySpan[spanKey] || [];
+  const rows = allRows.filter(
+    (it) =>
+      it.equipmentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      it.equipmentCode.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // เตรียมกราฟ top5
+  const chartData = [...rows]
+    .sort((a, b) => b.usageCount - a.usageCount)
+    .slice(0, 5)
+    .map((it) => ({
+      label: `${it.equipmentName} (${it.equipmentCode})`,
+      usageCount: it.usageCount,
+    }));
+
+  // Export Excel
+  const exportCurrent = () => {
+    const ws = XLSX.utils.json_to_sheet(
+      rows.map((it) => ({
+        "รหัสอุปกรณ์": it.equipmentCode,
+        "ชื่ออุปกรณ์": it.equipmentName,
+        "ครั้งใช้งาน": it.usageCount,
       }))
     );
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, `Top_${span}_${unit}`);
-    const wbout = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    saveAs(new Blob([wbout]), `TopEquipment_${span}_${unit}.xlsx`);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, spanKey);
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    saveAs(new Blob([wbout]), `Usage_${spanKey}.xlsx`);
+  };
+  const exportAll = () => {
+    const wb = XLSX.utils.book_new();
+    Object.entries(dataBySpan).forEach(([label, list]) => {
+      const ws = XLSX.utils.json_to_sheet(
+        list.map((it) => ({
+          "รหัสอุปกรณ์": it.equipmentCode,
+          "ชื่ออุปกรณ์": it.equipmentName,
+          "ครั้งใช้งาน": it.usageCount,
+        }))
+      );
+      XLSX.utils.book_append_sheet(wb, ws, label);
+    });
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    saveAs(new Blob([wbout]), `Usage_AllSpans.xlsx`);
   };
 
-  // Export all spans
-  const handleExportAll = async () => {
-    try {
-      const res = await fetch(`/api/report?type=topEquipmentAll`);
-      const json = await res.json();
-      if (!json.success) throw new Error(json.message);
-      const workbook = XLSX.utils.book_new();
-
-      // json.data is an object: { "1 วัน": [...], "1 สัปดาห์": [...], ... }
-      for (const [label, items] of Object.entries(json.data)) {
-        const wsData = items.map((item) => ({
-          "รหัสอุปกรณ์": item.equipmentCode,
-          "ชื่ออุปกรณ์": item.equipmentName,
-          "จำนวนครั้งใช้งาน": item.usageCount,
-        }));
-        const ws = XLSX.utils.json_to_sheet(wsData);
-        XLSX.utils.book_append_sheet(workbook, ws, label);
-      }
-
-      const wbout = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-      saveAs(new Blob([wbout]), `TopEquipment_AllSpans.xlsx`);
-    } catch (err) {
-      console.error(err);
-      alert("❌ ไม่สามารถ Export ทุกช่วงเวลาได้");
-    }
-  };
+  if (loading)
+    return <p className="p-6 text-center text-gray-600">⏳ กำลังโหลดข้อมูล...</p>;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col items-center py-8 px-4">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-5xl bg-white rounded-2xl shadow-xl p-8"
-      >
-        {/* Back + Title + Export Buttons */}
-        <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="bg-white shadow-lg rounded-lg p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <button
             onClick={() => router.back()}
             className="flex items-center text-gray-600 hover:text-gray-800"
           >
             <ArrowLeft size={20} className="mr-2" /> ย้อนกลับ
           </button>
-          <h1 className="text-3xl font-semibold text-gray-800">
-            📊 สถิติอุปกรณ์ใช้บ่อยสุดย้อนหลัง {span}{" "}
-            {unit === "day" ? "วัน" : unit === "week" ? "สัปดาห์" : "เดือน"}
+          <h1 className="text-2xl font-semibold text-gray-800">
+            สถิติอุปกรณ์ (ย้อนหลัง {spanKey})
           </h1>
           <div className="flex flex-col items-end space-y-2">
             <button
-              onClick={handleExportAll}
-              className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow transition"
+              onClick={exportAll}
+              className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow"
             >
-              <FileSpreadsheet size={18} className="mr-2" />
-              ส่งออก Excel ทั้งหมด
+              <FileSpreadsheet className="mr-2" /> ส่งออกข้อมูลทั้งหมด
             </button>
             <button
-              onClick={handleExportExcel}
-              className="flex items-center bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow transition"
+              onClick={exportCurrent}
+              className="flex items-center bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded shadow"
             >
-              <FileSpreadsheet size={18} className="mr-2" />
-              ส่งออก Excel เลือกช่วง
+              <FileSpreadsheet className="mr-2" /> ส่งออกช่วงนี้
             </button>
           </div>
         </div>
 
-        {/* Span Selector */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          {SPAN_OPTIONS.map((opt) => {
-            const active = span === opt.value && unit === opt.unit;
-            return (
+        {/* Filters + Search */}
+        <div className="flex flex-wrap justify-between items-center gap-4">
+          <div className="flex flex-wrap gap-2">
+            {SPAN_OPTIONS.map((opt) => (
               <button
-                key={`${opt.unit}-${opt.value}`}
-                onClick={() => setSpanUnit({ value: opt.value, unit: opt.unit })}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition ${
-                  active
-                    ? "bg-gradient-to-r from-indigo-600 to-blue-500 text-white shadow-lg"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                key={opt.key}
+                onClick={() => setSpanKey(opt.key)}
+                className={`px-4 py-1 rounded-full text-sm font-medium transition ${
+                  spanKey === opt.key
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
                 }`}
               >
                 {opt.label}
               </button>
-            );
-          })}
+            ))}
+          </div>
+          <input
+            type="text"
+            placeholder="🔍 รหัสหรือชื่ออุปกรณ์"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
         </div>
 
-        {/* Chart */}
-        {loading ? (
-          <div className="text-center py-16 text-gray-500">⏳ กำลังโหลด...</div>
-        ) : error ? (
-          <div className="text-center py-16 text-red-500">{error}</div>
-        ) : (
-          <ResponsiveContainer width="100%" height={500}>
+        {/* Mini Chart */}
+        <div className="w-full h-48">
+          <ResponsiveContainer width="100%" height="100%">
             <BarChart
+              data={chartData}
               layout="vertical"
-              data={data}
-              margin={{ top: 20, right: 40, left: 100, bottom: 5 }}
+              margin={{ top: 10, right: 20, left: 80, bottom: 5 }}
             >
-              <defs>
-                <linearGradient id="barGrad" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#6366f1" />
-                  <stop offset="100%" stopColor="#3b82f6" />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-
-              <XAxis
-                type="number"
-                tick={{ fill: "#4b5563", fontSize: 14 }}
-                axisLine={{ stroke: "#cbd5e1" }}
-                tickLine={false}
-              />
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis type="number" hide />
               <YAxis
+                dataKey="label"
                 type="category"
-                dataKey="equipmentLabel"
-                width={220}
-                tick={{ fill: "#4b5563", fontSize: 14, lineHeight: "20px" }}
+                width={120}
+                tick={{ fontSize: 12 }}
               />
-
-              <Tooltip
-                formatter={(value) => [`${value} ครั้ง`, "ใช้งาน"]}
-                contentStyle={{
-                  borderRadius: "0.5rem",
-                  border: "none",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  fontSize: "14px",
-                }}
-              />
-              <Legend wrapperStyle={{ paddingBottom: 8, fontSize: 14 }} />
-
-              <Bar dataKey="usageCount" fill="url(#barGrad)" name="ครั้งใช้งาน" barSize={24}>
-                <LabelList dataKey="usageCount" position="right" fill="#374151" fontSize={14} />
+              <Tooltip formatter={(v) => [`${v} ครั้ง`, "ใช้งาน"]} />
+              <Bar dataKey="usageCount" fill="#3b82f6" barSize={16}>
+                <LabelList
+                  dataKey="usageCount"
+                  position="right"
+                  fill="#374151"
+                  fontSize={12}
+                />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-        )}
-      </motion.div>
+        </div>
+
+        {/* Data Table */}
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                  รหัสอุปกรณ์
+                </th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                  ชื่ออุปกรณ์
+                </th>
+                <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">
+                  ครั้งใช้งาน
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {rows.length > 0 ? (
+                rows.map((it) => (
+                  <tr key={it.equipmentID} className="hover:bg-gray-50">
+                    <td className="px-4 py-2 text-sm text-gray-800">{it.equipmentCode}</td>
+                    <td className="px-4 py-2 text-sm text-gray-800">{it.equipmentName}</td>
+                    <td className="px-4 py-2 text-sm text-gray-800 text-right">
+                      {it.usageCount}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={3} className="px-4 py-6 text-center text-gray-500">
+                    ไม่พบข้อมูล
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

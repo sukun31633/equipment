@@ -121,7 +121,6 @@ export default function TopEquipmentReportPage() {
             📊 สถิติอุปกรณ์ใช้บ่อยสุดย้อนหลัง {span}{" "}
             {unit === "day" ? "วัน" : unit === "week" ? "สัปดาห์" : "เดือน"}
           </h1>
-          <div className="space-x-2">
           <div className="flex flex-col items-end space-y-2">
             <button
               onClick={handleExportAll}
@@ -137,7 +136,6 @@ export default function TopEquipmentReportPage() {
               <FileSpreadsheet size={18} className="mr-2" />
               ส่งออก Excel เลือกช่วง
             </button>
-          </div>
           </div>
         </div>
 

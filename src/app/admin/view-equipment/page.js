@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Trash2, Edit, CheckCircle2 } from "lucide-react";
+import { Search, Trash2, Edit, CheckCircle2, BarChart2 } from "lucide-react";
 import AdminNavigationBar from "@/app/components/AdminNavigationBar";
 
 const statusMap = {
@@ -90,6 +90,7 @@ export default function EquipmentListPage() {
       {/* Header */}
       <div className="w-full max-w-4xl bg-white p-4 shadow-lg flex items-center justify-between rounded-lg mb-6">
         <h2 className="text-lg font-semibold text-gray-800">📦 ข้อมูลอุปกรณ์</h2>
+
         <div className="flex items-center space-x-2">
           <input
             type="text"
@@ -116,6 +117,14 @@ export default function EquipmentListPage() {
           >
             ซ่อม &amp; พัง
           </button>
+    {/* ปุ่มรายงานสถิติ */}
+    <button
+      onClick={() => router.push("/admin/reports/monthly-usage")}
+      className="flex items-center bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-4 py-2 rounded-lg shadow-lg transition ml-4"
+    >
+      <BarChart2 size={18} className="mr-2" />
+      สถิติอุปกรณ์
+    </button>
         </div>
       </div>
 

@@ -14,6 +14,11 @@ const statusMap = {
   Rejected: "ถูกปฏิเสธ",
 };
 
+const statusClasses = {
+  Returned: "bg-green-100 text-green-800",
+  Rejected: "bg-red-100 text-red-800",
+};
+
 export default function BorrowingHistoryPage() {
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
@@ -157,11 +162,11 @@ export default function BorrowingHistoryPage() {
                   <p className="text-gray-800">👤 ผู้ใช้: {userName}</p>
                   {dateInfo}                
                   <p className="text-gray-800">
-                    ⚠ สถานะ: {statusMap[item.status] || item.status}
+                  <span className={`inline-flex items-center px-3 py-1 font-semibold rounded-full shadow-sm ${statusClasses[item.status]}`}>{statusMap[item.status]}</span>
                   </p>
                   {item.status === "Rejected" ? (
   <p className="mt-2 text-red-600">
-    📌 เหตุผล: {item.rejection_reason || "ไม่มีรายละเอียดเพิ่มเติม"}
+    📌 เหตุผล: {item.rejection_reason || "ผู้ใช้งานยกเลิกการจองเอง"}
   </p>
 ) : null}
 

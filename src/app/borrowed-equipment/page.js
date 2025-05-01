@@ -86,6 +86,13 @@ export default function BorrowedEquipmentPage() {
     Overdue: "เลยกำหนดการยืม"
   };
 
+  const statusClasses = {
+    Pending: "bg-yellow-100 text-yellow-800",
+    Approved: "bg-blue-100 text-blue-800",
+    Borrowed: "bg-green-100 text-green-800",
+    Overdue: "bg-red-100 text-red-800"
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 to-indigo-600 flex flex-col items-center p-6 pb-24 w-full">
       {/* Header */}
@@ -178,7 +185,7 @@ export default function BorrowedEquipmentPage() {
                   <p className="text-gray-800">👤 ผู้ใช้: {userName}</p>
                   {dateInfo}
                   <p className="text-gray-800">
-                    ⚠ สถานะ: {statusMap[item.status] || item.status}
+                    <span className={`inline-flex items-center px-3 py-1 font-semibold rounded-full shadow-sm  ${statusClasses[item.status]}`}>{statusMap[item.status]}</span>
                   </p>
                 </div>
                 {/* แสดงปุ่ม "ยกเลิกการจอง" เฉพาะสำหรับรายการการจองที่มีสถานะ Pending หรือ Approved */}

@@ -16,6 +16,15 @@ const statusMap = {
   Returned: "คืนแล้ว",
   Rejected: "ถูกปฏิเสธ"
 };
+  // เพิ่มคลาสสีของ badge ตามสถานะ
+  const statusClasses = {
+    Pending: "bg-yellow-100 text-yellow-800",
+    Approved: "bg-blue-100 text-blue-800",
+    Borrowed: "bg-green-100 text-green-800",
+    Overdue: "bg-red-100 text-red-800",
+    Returned: "bg-gray-100 text-gray-800",
+    Rejected: "bg-pink-100 text-pink-800"
+  };
 
 export default function BorrowedEquipmentPage() {
   const router = useRouter();
@@ -91,7 +100,7 @@ export default function BorrowedEquipmentPage() {
       <div>
     <h2 className="text-2xl font-bold text-blue-700">📦 รายการอุปกรณ์</h2>
   </div>
-      <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+      <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xl font-medium">
     หน้าสำหรับ: เจ้าหน้าที่
   </div>
   <button
@@ -234,9 +243,9 @@ export default function BorrowedEquipmentPage() {
             <p className="text-gray-800">🆔 รหัสผู้ใช้: {item.userID}</p>
             <p className="text-gray-800">👤 ผู้ใช้: {userName}</p>
             {dateInfo}
-            <p className="text-gray-800">
-              ⚠ สถานะ: {statusMap[item.status] || item.status}
-            </p>
+            <span className={`inline-flex items-center px-3 py-1 font-semibold rounded-full shadow-sm ${statusClasses[item.status]}`}>
+                      {statusMap[item.status] || item.status}
+                    </span>
           </div>
         </motion.div>
       );

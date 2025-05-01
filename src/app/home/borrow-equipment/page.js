@@ -21,7 +21,7 @@ export default function BorrowEquipmentPage() {
   const [error, setError] = useState("");
 
   // รายการวิชาที่ใช้บ่อย
-  const commonCourses = ["CS1012", "IT2050", "CS2021", "IT3033"];
+  const commonCourses = ["CS3513 IOT", "CS4413 NETWORK", "CS3533 OPERATING SYSTEMS", "CS4903 SPECIAL PROJECT"];
   // รายการเหตุผลที่ใช้บ่อย
   const commonReasons = ["ทำโปรเจค", "แสดงนิทรรศการ", "ทำวิจัย", "เรียนภาคปฏิบัติ"];
 

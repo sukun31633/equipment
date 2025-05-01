@@ -4,13 +4,14 @@ import pool from '../../../../../lib/mysql';
 import nodemailer from 'nodemailer';
 import twilio from 'twilio';
 import { NextResponse } from 'next/server';
+import dayjs from 'dayjs';
 
 // 1) สร้าง transporter สำหรับ Nodemailer โดยใช้ Gmail
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.GMAIL_USER,   // เช่น sukuntun31633@gmail.com
-    pass: process.env.GMAIL_PASS,   // App Password ที่สร้างจาก Google Account
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS,
   },
 });
 
@@ -26,12 +27,17 @@ function formatPhone(phone) {
   return p.startsWith('0') ? '+66' + p.slice(1) : p;
 }
 
+// helper: ฟอร์แมตรูปแบบวันที่เป็น DD-MM-YYYY
+function formatDate(date) {
+  return dayjs(date).format('DD-MM-YYYY');
+}
+
 // ส่งอีเมลจริงไปยังอีเมลจากฐานข้อมูล
 async function sendEmail(to, subject, html) {
   try {
     await transporter.sendMail({
       from: process.env.GMAIL_USER,
-      to,      // ← ส่งไปยังอีเมลของผู้ใช้ที่ดึงจากตาราง user
+      to,
       subject,
       html,
     });
@@ -61,9 +67,7 @@ async function sendSMS(message) {
 async function getUserNotificationSettings(userID) {
   try {
     const [rows] = await pool.query(
-      `SELECT smsNotification, emailNotification
-       FROM user
-       WHERE userID = ?`,
+      `SELECT smsNotification, emailNotification FROM user WHERE userID = ?`,
       [userID]
     );
     if (!rows.length) return { sms: 'disabled', email: 'disabled' };
@@ -126,75 +130,83 @@ export async function GET() {
 
     // 1) แจ้งเตือน Overdue
     for (const item of overdueList) {
-      const name  = item.borrowerName  || item.reserverName;
-      const email = item.userEmail;      // ← ใช้ email จาก user table
+      const name = item.borrowerName || item.reserverName;
+      const email = item.userEmail;
       const settings = await getUserNotificationSettings(item.userID);
+      const dateStr = formatDate(item.endDate);
 
+      // แจ้งเตือนผู้ใช้ทางอีเมล (ถ้าเปิด)
       if (settings.email === 'enabled') {
         await sendEmail(
           email,
           '🔔 แจ้งเตือน: เกินกำหนดคืนอุปกรณ์',
           `<p>เรียน คุณ ${name},</p>
-           <p>อุปกรณ์ครบกำหนดคืนเมื่อ ${item.endDate} และยังไม่คืน</p>
+           <p>อุปกรณ์ครบกำหนดคืนเมื่อ ${dateStr} และยังไม่คืน</p>
            <p>กรุณาคืนอุปกรณ์โดยด่วน ชั้น 4</p>`
         );
-      
-        // ✅ ส่งสำเนาแจ้งเตือนให้เจ้าหน้าที่
-        await sendEmail(
-          'jingpt888@gmail.com',
-          `📋 เรียนเจ้าหน้าที่ แจ้งเตือนเกินกำหนด: ${name}`,
-          `<p>เรียนเจ้าหน้าที่ แจ้งเตือนผู้ใช้: ${name} (${item.userID})</p>
-           <p>สถานะ: ${item.status}</p>
-           <p>อุปกรณ์ครบกำหนด: ${item.endDate}</p>`
-        );
       }
+      // ส่งสำเนาแจ้งเตือนให้เจ้าหน้าที่เสมอ
+      await sendEmail(
+        'jingpt888@gmail.com',
+        `📋 แจ้งเตือนเกินกำหนด: ${name}`,
+        `<p>ผู้ใช้: ${name} (${item.userID})</p>
+         <p>สถานะ: ${item.status}</p>
+         <p>ครบกำหนด: ${dateStr} (เกินกำหนดคืนอุปกรณ์)</p>`
+      );
+      // ส่ง SMS ให้เจ้าหน้าที่เสมอ
+      await sendSMS(
+        `📱 เจ้าหน้าที่: ผู้ใช้ ${name} (${item.userID}) สถานะ ${item.status} ครบกำหนด ${dateStr}`
+      );
+
+      // แจ้งเตือนทาง SMS (ถ้าเปิด)
       if (settings.sms === 'enabled') {
         await sendSMS(
-          `📱 คุณ ${name}, อุปกรณ์ครบกำหนดคืน ${item.endDate} เกินกำหนดแล้ว กรุณาคืนทันที`
+          `📱 คุณ ${name}, อุปกรณ์ครบกำหนดคืน ${dateStr} เกินกำหนดแล้ว กรุณาคืนทันที`
         );
       }
     }
 
     // 2) แจ้งเตือนจะครบกำหนดคืนพรุ่งนี้
     for (const item of reminderList) {
-      const name  = item.borrowerName  || item.reserverName;
+      const name = item.borrowerName || item.reserverName;
       const email = item.userEmail;
       const settings = await getUserNotificationSettings(item.userID);
+      const dateStr = formatDate(item.endDate);
 
+      // แจ้งเตือนผู้ใช้ทางอีเมล (ถ้าเปิด)
       if (settings.email === 'enabled') {
         await sendEmail(
           email,
           '🔔 แจ้งเตือน: คืนอุปกรณ์พรุ่งนี้',
           `<p>เรียน คุณ ${name},</p>
-           <p>อุปกรณ์จะครบกำหนดคืนพรุ่งนี้ (${item.endDate})</p>
+           <p>อุปกรณ์จะครบกำหนดคืนพรุ่งนี้ (${dateStr})</p>
            <p>กรุณาคืนตามกำหนด ชั้น 4</p>`
         );
-      
-        // ✅ ส่งสำเนาแจ้งเตือนให้เจ้าหน้าที่
-        await sendEmail(
-          'jingpt888@gmail.com',
-          `📋 เรียนเจ้าหน้าที่ แจ้งเตือนล่วงหน้า: ${name}`,
-          `<p>เรียนเจ้าหน้าที่ แจ้งเตือนผู้ใช้ล่วงหน้า: ${name} (${item.userID})</p>
-           <p>สถานะ: ${item.status}</p>
-           <p>อุปกรณ์จะครบกำหนดคืน: ${item.endDate}</p>`
-        );
       }
+      // ส่งสำเนาแจ้งเตือนให้เจ้าหน้าที่เสมอ
+      await sendEmail(
+        'jingpt888@gmail.com',
+        `📋 แจ้งเตือนล่วงหน้า: ${name}`,
+        `<p>ผู้ใช้: ${name} (${item.userID})</p>
+         <p>สถานะ: ${item.status}</p>
+         <p>ครบกำหนด: ${dateStr} (อุปกรณ์จะครบกำหนดคืนพรุ่งนี้)</p>`
+      );
+      // ส่ง SMS ให้เจ้าหน้าที่เสมอ
+      await sendSMS(
+        `📱 เจ้าหน้าที่: ผู้ใช้ ${name} (${item.userID}) สถานะ ${item.status} ครบกำหนดพรุ่งนี้ ${dateStr}`
+      );
+
+      // แจ้งเตือนทาง SMS (ถ้าเปิด)
       if (settings.sms === 'enabled') {
         await sendSMS(
-          `📱 คุณ ${name}, อุปกรณ์จะครบกำหนดคืนพรุ่งนี้ (${item.endDate}) โปรดคืนตามกำหนด `
+          `📱 คุณ ${name}, อุปกรณ์จะครบกำหนดคืนพรุ่งนี้ (${dateStr}) โปรดคืนตามกำหนด`
         );
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Notifications processed',
-    });
+    return NextResponse.json({ success: true, message: 'Notifications processed' });
   } catch (err) {
     console.error('Error in checkReminders:', err);
-    return NextResponse.json(
-      { success: false, message: err.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
   }
 }

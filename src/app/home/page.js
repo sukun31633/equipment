@@ -31,7 +31,9 @@ export default function HomePage() {
         const res = await fetch("/api/view-equipment");
         const data = await res.json();
         if (data.success) {
-          const availableEquipments = data.data.filter(e => e.status === "Available");
+          const availableEquipments = data.data.filter(
+            (e) => e.status === "Available"
+          );
           setEquipmentList(availableEquipments);
         } else {
           console.error("เกิดข้อผิดพลาดในการดึงข้อมูลอุปกรณ์");
@@ -51,16 +53,24 @@ export default function HomePage() {
   };
 
   const goToEquipmentDetail = (equipmentID) => {
-    router.push(`/home/equipment-detail?id=${encodeURIComponent(equipmentID)}`);
+    router.push(
+      `/home/equipment-detail?id=${encodeURIComponent(equipmentID)}`
+    );
   };
 
-  const filterEquipment = e =>
+  const filterEquipment = (e) =>
     e.name.toLowerCase().includes(searchTerm.toLowerCase());
 
   const categorizedEquipment = {
-    IOT: equipmentList.filter(i => i.category.trim() === "IOT" && filterEquipment(i)),
-    network: equipmentList.filter(i => i.category.trim() === "network" && filterEquipment(i)),
-    others: equipmentList.filter(i => i.category.trim() === "อุปกรณ์อื่นๆ" && filterEquipment(i)),
+    IOT: equipmentList.filter(
+      (i) => i.category.trim() === "IOT" && filterEquipment(i)
+    ),
+    network: equipmentList.filter(
+      (i) => i.category.trim() === "network" && filterEquipment(i)
+    ),
+    others: equipmentList.filter(
+      (i) => i.category.trim() === "อุปกรณ์อื่นๆ" && filterEquipment(i)
+    ),
   };
 
   // ถ้ากำลังโหลดข้อมูล ให้โชว์ spinner เต็มจอ
@@ -72,23 +82,35 @@ export default function HomePage() {
     );
   }
 
+  // แปลง role เป็นข้อความภาษาไทย
+  const roleLabel = () => {
+    const role = session?.user?.role;
+    if (role === "student") return "นักศึกษา";
+    if (role === "teacher") return "อาจารย์";
+    return "ผู้ใช้งาน";
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-indigo-600 flex flex-col items-center p-6 pb-24 w-full"> 
-      <motion.div 
+    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-indigo-600 flex flex-col items-center p-6 pb-24 w-full">
+      <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-3xl p-6 bg-white shadow-lg flex flex-col items-center rounded-lg"
       >
-        <h2 className="text-2xl font-bold text-blue-700 mb-2">
+        <h2 className="text-2xl font-bold text-blue-700 mb-1">
           ชื่อผู้ใช้งาน: {session?.user?.name || "ผู้เยี่ยมชม"}
         </h2>
+        {/* แสดงหน้าสำหรับ role */}
+        <p className="text-lg text-gray-600 mb-4">
+          หน้าสำหรับ: {roleLabel()}
+        </p>
         <div className="flex w-full max-w-2xl items-center bg-gray-100 p-3 rounded-lg shadow-md">
           <input
             type="text"
             placeholder="🔍 ค้นหาอุปกรณ์..."
             value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full border-none p-3 rounded-l-lg bg-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none text-gray-700"
           />
           <motion.button
@@ -98,7 +120,6 @@ export default function HomePage() {
             className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 py-3 rounded-r-lg hover:from-blue-600 hover:to-indigo-600 shadow-md flex items-center"
           >
             <Search size={24} />
-            { /* ถ้าต้องการ Spinner ในปุ่มตอนค้นหา ก็เช็ค isSearching เพิ่มได้ */ }
           </motion.button>
         </div>
       </motion.div>
@@ -110,7 +131,7 @@ export default function HomePage() {
               {category}
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-              {items.map(equipment => (
+              {items.map((equipment) => (
                 <motion.div
                   key={equipment.id}
                   whileHover={{ scale: 1.05 }}
@@ -126,12 +147,12 @@ export default function HomePage() {
                       src={equipment.image || "/uploads/default.png"}
                       alt={equipment.name}
                       className="w-full h-full object-contain rounded-md"
-                      onError={e => (e.target.src = "/uploads/default.png")}
+                      onError={(e) => (e.target.src = "/uploads/default.png")}
                     />
                   </div>
                   <p className="text-lg text-center mt-3 font-semibold text-gray-800 tracking-wide capitalize min-h-[50px] flex items-center justify-center">
                     {equipment.name || "ไม่มีชื่ออุปกรณ์"}
-                    <br/>
+                    <br />
                     รหัสอุปกรณ์: {equipment.equipment_code || "ไม่มีรหัสสินค้า"}
                   </p>
                 </motion.div>

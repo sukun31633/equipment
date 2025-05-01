@@ -86,9 +86,14 @@ export default function BorrowedEquipmentPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col items-center p-6 pb-24 w-full">
       {/* Header */}
+      
       <div className="w-full max-w-4xl p-4 bg-white shadow-lg flex items-center justify-between rounded-lg">
-
-      <h2 className="text-2xl font-bold text-blue-700">📦 รายการอุปกรณ์</h2>
+      <div>
+    <h2 className="text-2xl font-bold text-blue-700">📦 รายการอุปกรณ์</h2>
+  </div>
+      <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+    หน้าสำหรับ: เจ้าหน้าที่
+  </div>
   <button
     onClick={() => {
       localStorage.clear();  // เคลียร์ข้อมูลใน localStorage
@@ -99,7 +104,7 @@ export default function BorrowedEquipmentPage() {
     ออกจากระบบ
   </button>
       </div>
-
+       
       {/* Status Filters (คงเดิม) */}
       <div className="flex justify-around w-full max-w-4xl bg-white shadow-md p-3 rounded-lg mt-6">
         {[

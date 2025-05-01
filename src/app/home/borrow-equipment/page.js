@@ -161,7 +161,7 @@ export default function BorrowEquipmentPage() {
         </div>
 
         <div className="mt-4">
-          <label className="block font-semibold mb-2 text-gray-700">📄 อัปโหลดเอกสารการอนุญาต (ถ้ามี)</label>
+          <label className="block font-semibold mb-2 text-gray-700">📄 อัปโหลดเอกสารการอนุญาต (ถ้ามี) (รูปแบบ pdf. และ png.)</label>
           <input type="file" onChange={(e) => setDocumentFile(e.target.files[0])} className="w-full border p-3 rounded shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
         </div>
 

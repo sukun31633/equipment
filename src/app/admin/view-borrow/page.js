@@ -88,7 +88,16 @@ export default function BorrowedEquipmentPage() {
       {/* Header */}
       <div className="w-full max-w-4xl p-4 bg-white shadow-lg flex items-center justify-between rounded-lg">
 
-        <h2 className="text-2xl font-bold text-blue-700">📦 รายการอุปกรณ์</h2>
+      <h2 className="text-2xl font-bold text-blue-700">📦 รายการอุปกรณ์</h2>
+  <button
+    onClick={() => {
+      localStorage.clear();  // เคลียร์ข้อมูลใน localStorage
+      router.push("/"); // กลับหน้า login
+    }}
+    className="text-sm bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+  >
+    ออกจากระบบ
+  </button>
       </div>
 
       {/* Status Filters (คงเดิม) */}

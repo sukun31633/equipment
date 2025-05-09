@@ -108,7 +108,7 @@ export default function EquipmentDetailPage() {
                         className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-3 px-6 rounded-lg w-full text-lg font-semibold shadow-md hover:from-blue-600 hover:to-indigo-600 transition"
                         onClick={goToBorrowEquipment}
                     >
-                        🔄 ยืมอุปกรณ์ตอนนี้
+                        🔄 ยืมอุปกรณ์ตอนนี้ (หน้าเคาน์เตอร์เจ้าหน้าที่)
                     </motion.button>
                     
                     <motion.button 

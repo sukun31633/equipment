@@ -78,6 +78,7 @@ export default function ReserveEquipmentPage() {
       const formData = new FormData();
       formData.append("reserverName", reserverName);
       formData.append("userID", userID);
+      formData.append("equipmentID", equipmentID); 
       formData.append("reservedEquipments", equipmentName);
       formData.append("startDate", fullStart);
       formData.append("endDate", endDate);

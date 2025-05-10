@@ -116,13 +116,13 @@ export default function AllEquipmentUsagePage() {
               onClick={exportAll}
               className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow"
             >
-              <FileSpreadsheet className="mr-2" /> ส่งออกข้อมูลทั้งหมด
+              <FileSpreadsheet className="mr-2" /> ส่งออกข้อมูลทั้งหมด Excel
             </button>
             <button
               onClick={exportCurrent}
               className="flex items-center bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded shadow"
             >
-              <FileSpreadsheet className="mr-2" /> ส่งออกช่วงนี้
+              <FileSpreadsheet className="mr-2" /> ส่งออกช่วงนี้ Excel
             </button>
           </div>
         </div>
@@ -164,10 +164,15 @@ export default function AllEquipmentUsagePage() {
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis type="number" hide />
               <YAxis
-                dataKey="label"
-                type="category"
-                width={120}
-                tick={{ fontSize: 12 }}
+                    dataKey="label"
+                    type="category"
+                    width={160}                          
+                    tick={{
+                         fontSize: 12,
+                          width: 140,                       
+                          wordBreak: "break-all",           
+                          whiteSpace: "normal"
+                          }}
               />
               <Tooltip formatter={(v) => [`${v} ครั้ง`, "ใช้งาน"]} />
               <Bar dataKey="usageCount" fill="#3b82f6" barSize={16}>

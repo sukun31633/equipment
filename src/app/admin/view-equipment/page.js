@@ -159,6 +159,17 @@ export default function EquipmentListPage() {
                 )}
               </div>
               <div className="flex space-x-2">
+                                {/* ปุ่มประวัติอุปกรณ์ */}
+                <button
+                  className="bg-blue-500 text-white px-3 py-2 rounded-lg shadow-md hover:bg-blue-600 transition flex items-center"
+                  onClick={() =>
+                    router.push(
+                      `/admin/view-equipment/history?id=${equipment.id}`
+                    )
+                  }
+                >
+                  📋 ประวัติอุปกรณ์
+                </button>
                 {/* ปุ่มซ่อมเสร็จ */}
                 {equipment.status === "Repair" && (
                   <button

@@ -11,7 +11,18 @@ export async function GET(req) {
     const unit = url.searchParams.get("unit") || "month";
     const type = url.searchParams.get("type") || "monthlyUsage";
 
-    // ถ้าเป็นโหมด all ให้ดึงทุกช่วงเลย
+    // เพิ่ม array ของสถานะที่ต้องการกรอง
+    const STATUSES = ["Borrowed", "Overdue", "Returned"];
+
+    // ฟังก์ชันสร้างเงื่อนไข SQL สำหรับกรอง status
+    const statusPlaceholder = STATUSES.map(() => "?").join(",");
+    const statusParams = [...STATUSES];
+
+    // UNION ALL subquery จะกลายเป็น:
+    // SELECT equipmentID, startDate AS dt FROM borrowing WHERE status IN (...) AND startDate >= ?
+    // UNION ALL
+    // SELECT equipmentID, startDate AS dt FROM reservation WHERE status IN (...) AND startDate >= ?
+
     if (type === "topEquipmentAll") {
       const SPANS = [
         { label: "1 วัน",   value: 1, unit: "day" },
@@ -24,26 +35,36 @@ export async function GET(req) {
 
       const result = {};
       for (const opt of SPANS) {
-        const since = dayjs().subtract(opt.value, opt.unit).format("YYYY-MM-DD");
-        const [rows] = await pool.query(
-          `
+        const since = dayjs()
+          .subtract(opt.value, opt.unit)
+          .format("YYYY-MM-DD");
+
+        const sql = `
           SELECT
-            e.id              AS equipmentID,
-            e.name            AS equipmentName,
-            e.equipment_code  AS equipmentCode,
-            COUNT(*)          AS usageCount
+            e.id             AS equipmentID,
+            e.name           AS equipmentName,
+            e.equipment_code AS equipmentCode,
+            COUNT(*)         AS usageCount
           FROM (
-            SELECT equipmentID, startDate AS dt FROM borrowing WHERE startDate >= ?
+            SELECT equipmentID, startDate AS dt
+            FROM borrowing
+            WHERE status IN (${statusPlaceholder})
+              AND startDate >= ?
             UNION ALL
-            SELECT equipmentID, startDate AS dt FROM reservation WHERE startDate >= ?
+            SELECT equipmentID, startDate AS dt
+            FROM reservation
+            WHERE status IN (${statusPlaceholder})
+              AND startDate >= ?
           ) AS t
-            JOIN equipment e ON t.equipmentID = e.id
+          JOIN equipment e
+            ON t.equipmentID = e.id
           GROUP BY e.id, e.name, e.equipment_code
           ORDER BY usageCount DESC
-         
-          `,
-          [since, since]
-        );
+        `;
+
+        // parameters: [ ...STATUSES, since, ...STATUSES, since ]
+        const params = [...statusParams, since, ...statusParams, since];
+        const [rows] = await pool.query(sql, params);
 
         result[opt.label] = rows.map(r => ({
           equipmentID:   r.equipmentID,
@@ -56,28 +77,36 @@ export async function GET(req) {
       return NextResponse.json({ success: true, data: result });
     }
 
-    // โหมด topEquipment ธรรมดา (span เดียว)
     if (type === "topEquipment") {
       const since = dayjs().subtract(span, unit).format("YYYY-MM-DD");
-      const [rows] = await pool.query(
-        `
+
+      const sql = `
         SELECT
-          e.id              AS equipmentID,
-          e.name            AS equipmentName,
-          e.equipment_code  AS equipmentCode,
-          COUNT(*)          AS usageCount
+          e.id             AS equipmentID,
+          e.name           AS equipmentName,
+          e.equipment_code AS equipmentCode,
+          COUNT(*)         AS usageCount
         FROM (
-          SELECT equipmentID, startDate AS dt FROM borrowing WHERE startDate >= ?
+          SELECT equipmentID, startDate AS dt
+          FROM borrowing
+          WHERE status IN (${statusPlaceholder})
+            AND startDate >= ?
           UNION ALL
-          SELECT equipmentID, startDate AS dt FROM reservation WHERE startDate >= ?
+          SELECT equipmentID, startDate AS dt
+          FROM reservation
+          WHERE status IN (${statusPlaceholder})
+            AND startDate >= ?
         ) AS t
-          JOIN equipment e ON t.equipmentID = e.id
+        JOIN equipment e
+          ON t.equipmentID = e.id
         GROUP BY e.id, e.name, e.equipment_code
         ORDER BY usageCount DESC
         LIMIT 10
-        `,
-        [since, since]
-      );
+      `;
+
+      const params = [...statusParams, since, ...statusParams, since];
+      const [rows] = await pool.query(sql, params);
+
       const data = rows.map(r => ({
         equipmentID:   r.equipmentID,
         equipmentName: r.equipmentName,
@@ -87,24 +116,31 @@ export async function GET(req) {
       return NextResponse.json({ success: true, data });
     }
 
-    // โหมด monthlyUsage (span เดียว)
     if (type === "monthlyUsage") {
       const since = dayjs().subtract(span, unit).format("YYYY-MM-DD");
-      const [rows] = await pool.query(
-        `
+
+      const sql = `
         SELECT
           DATE_FORMAT(dt, "%Y-%m") AS month,
-          COUNT(*)            AS totalUsage
+          COUNT(*)                AS totalUsage
         FROM (
-          SELECT startDate AS dt FROM borrowing WHERE startDate >= ?
+          SELECT startDate AS dt
+          FROM borrowing
+          WHERE status IN (${statusPlaceholder})
+            AND startDate >= ?
           UNION ALL
-          SELECT startDate AS dt FROM reservation WHERE startDate >= ?
+          SELECT startDate AS dt
+          FROM reservation
+          WHERE status IN (${statusPlaceholder})
+            AND startDate >= ?
         ) AS t
         GROUP BY month
         ORDER BY month ASC
-        `,
-        [since, since]
-      );
+      `;
+
+      const params = [...statusParams, since, ...statusParams, since];
+      const [rows] = await pool.query(sql, params);
+
       const data = rows.map(r => ({
         month:      r.month,
         totalUsage: r.totalUsage,
@@ -112,12 +148,10 @@ export async function GET(req) {
       return NextResponse.json({ success: true, data });
     }
 
-    // ถ้า type ไม่ตรง
     return NextResponse.json(
       { success: false, message: "Invalid report type" },
       { status: 400 }
     );
-
   } catch (err) {
     console.error("Report API error:", err);
     return NextResponse.json(

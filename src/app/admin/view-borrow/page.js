@@ -150,6 +150,16 @@ export default function BorrowedEquipmentPage() {
             <Search size={20} />
           </button>
         </div>
+            {/* ปุ่มดูประวัติผู้ใช้ */}
+    <button
+      onClick={() =>
+        router.push(`/admin/view-borrow/user-history`)
+      }
+      className="flex items-center bg-indigo-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-indigo-600 transition"
+    >
+      <ArrowLeft className="transform rotate-180 mr-2" size={16} />
+      ประวัติผู้ใช้
+    </button>
         {/* ปุ่มลบข้อมูลทั้งหมด */}
         <button
           onClick={handleDeleteAll}

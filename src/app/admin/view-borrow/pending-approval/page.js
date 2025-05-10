@@ -39,6 +39,15 @@ export default function PendingApprovalPage() {
     fetchRequests();
   }, []);
 
+    // Full-screen loader
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-200 to-indigo-600">
+        <Loader2 size={64} className="animate-spin text-white" />
+      </div>
+    );
+  }
+
   const filteredBorrow = borrowRequests.filter(
     (it) =>
       it.status === "Pending" &&

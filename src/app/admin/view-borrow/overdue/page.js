@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, ArrowLeft, AlertCircle } from "lucide-react";
+import { Search, ArrowLeft, AlertCircle,Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import dayjs from "dayjs";
@@ -48,6 +48,14 @@ export default function OverduePage() {
     }
     fetchData();
   }, []);
+
+    if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-200 to-indigo-600">
+        <Loader2 size={64} className="animate-spin text-white" />
+      </div>
+    );
+  }
 
   // กรองเฉพาะรายการที่มีสถานะ "Overdue" สำหรับการยืมและการจอง
   const filteredBorrowRequests = borrowRequests.filter(

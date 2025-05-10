@@ -9,7 +9,7 @@ import {
   EyeOff, 
   Trash2, 
   Upload, 
-  Users 
+  Users, 
 } from "lucide-react";
 
 export default function ViewStudentPage() {

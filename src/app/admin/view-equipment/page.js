@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Trash2, Edit, CheckCircle2, BarChart2 } from "lucide-react";
+import { Search, Trash2, Edit, CheckCircle2, BarChart2,Loader2 } from "lucide-react";
 import AdminNavigationBar from "@/app/components/AdminNavigationBar";
 
 const statusMap = {
@@ -32,6 +32,15 @@ export default function EquipmentListPage() {
     };
     fetchEquipment();
   }, []);
+
+      // ขณะที่กำลังโหลด แสดง spinner เต็มหน้าจอ
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-500 to-indigo-600">
+        <Loader2 size={64} className="animate-spin text-white" />
+      </div>
+    );
+  }
 
   const handleEdit = (id) => router.push(`/admin/view-equipment/edit-equipment?id=${id}`);
 

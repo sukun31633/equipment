@@ -60,7 +60,7 @@ export default function UserHistoryPage() {
   // ส่งออกเป็น Excel
   const exportToExcel = () => {
     const data = filteredHistory.map(r => ({
-      ประเภท:      r.type === "Borrow" ? "ยืมจริง" : "จองล่วงหน้า",
+      ประเภท:      r.type === "Borrow" ? "รายการยืม" : "รายการจอง",
       เลขรายการ:  r.recordID,
       รหัสอุปกรณ์: r.equipmentCode,
       ชื่ออุปกรณ์: r.equipmentName,
@@ -142,7 +142,7 @@ export default function UserHistoryPage() {
               <tbody className="divide-y divide-gray-100">
                 {filteredHistory.map(row => (
                   <tr key={`${row.type}-${row.recordID}`}>
-                    <td className="px-4 py-2">{row.type === "Borrow" ? "ยืมจริง" : "จองล่วงหน้า"}</td>
+                    <td className="px-4 py-2">{row.type === "Borrow" ? "รายการยืม" : "รายการจอง"}</td>
                     <td className="px-4 py-2">{row.recordID}</td>
                     <td className="px-4 py-2">{row.equipmentCode}</td>
                     <td className="px-4 py-2">{row.equipmentName}</td>

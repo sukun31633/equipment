@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, ArrowLeft, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 export default function AddUserPage() {
   const router = useRouter();
-
+  const [isLoading, setIsLoading] = useState(true);
   // State สำหรับฟอร์มข้อมูล
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -16,6 +17,12 @@ export default function AddUserPage() {
   const [userType, setUserType] = useState("นักศึกษา");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  
+  useEffect(() => {
+    // simulate loading for 1s
+    const t = setTimeout(() => setIsLoading(false), 1000);
+    return () => clearTimeout(t);
+  }, []);
 
   const handleBack = () => {
     router.back();
@@ -56,6 +63,14 @@ export default function AddUserPage() {
       alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
     }
   };
+
+    if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-gray-100 to-gray-300">
+        <Loader2 size={48} className="animate-spin text-gray-700" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 flex flex-col items-center p-6 pb-24">

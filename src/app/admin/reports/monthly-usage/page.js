@@ -1,5 +1,6 @@
 "use client";
-import { FileSpreadsheet, ArrowLeft } from "lucide-react";
+
+import { FileSpreadsheet, ArrowLeft, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
@@ -47,6 +48,15 @@ export default function AllEquipmentUsagePage() {
     loadAll();
   }, []);
 
+  // ← Loading spinner
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <Loader2 size={48} className="animate-spin text-gray-600" />
+      </div>
+    );
+  }
+
   // แปลงข้อมูล+กรอง
   const allRows = dataBySpan[spanKey] || [];
   const rows = allRows.filter(
@@ -93,9 +103,6 @@ export default function AllEquipmentUsagePage() {
     const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
     saveAs(new Blob([wbout]), `Usage_AllSpans.xlsx`);
   };
-
-  if (loading)
-    return <p className="p-6 text-center text-gray-600">⏳ กำลังโหลดข้อมูล...</p>;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -164,15 +171,15 @@ export default function AllEquipmentUsagePage() {
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis type="number" hide />
               <YAxis
-                    dataKey="label"
-                    type="category"
-                    width={160}                          
-                    tick={{
-                         fontSize: 12,
-                          width: 140,                       
-                          wordBreak: "break-all",           
-                          whiteSpace: "normal"
-                          }}
+                dataKey="label"
+                type="category"
+                width={160}
+                tick={{
+                  fontSize: 12,
+                  width: 140,
+                  wordBreak: "break-all",
+                  whiteSpace: "normal"
+                }}
               />
               <Tooltip formatter={(v) => [`${v} ครั้ง`, "ใช้งาน"]} />
               <Bar dataKey="usageCount" fill="#3b82f6" barSize={16}>
@@ -207,8 +214,12 @@ export default function AllEquipmentUsagePage() {
               {rows.length > 0 ? (
                 rows.map((it) => (
                   <tr key={it.equipmentID} className="hover:bg-gray-50">
-                    <td className="px-4 py-2 text-sm text-gray-800">{it.equipmentCode}</td>
-                    <td className="px-4 py-2 text-sm text-gray-800">{it.equipmentName}</td>
+                    <td className="px-4 py-2 text-sm text-gray-800">
+                      {it.equipmentCode}
+                    </td>
+                    <td className="px-4 py-2 text-sm text-gray-800">
+                      {it.equipmentName}
+                    </td>
                     <td className="px-4 py-2 text-sm text-gray-800 text-right">
                       {it.usageCount}
                     </td>

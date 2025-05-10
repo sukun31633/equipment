@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ArrowLeft, Search, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Search } from "lucide-react";
 
 export default function UserHistoryListingPage() {
   const router = useRouter();
@@ -25,6 +25,15 @@ export default function UserHistoryListingPage() {
     }
     fetchUsers();
   }, []);
+
+  // full-page spinner
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-gray-50 to-gray-200">
+        <Loader2 size={64} className="animate-spin text-gray-600" />
+      </div>
+    );
+  }
 
   const filtered = users.filter(
     (u) =>
@@ -69,11 +78,7 @@ export default function UserHistoryListingPage() {
 
       {/* User Cards */}
       <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (
-          <p className="col-span-full text-center text-gray-600">
-            ⏳ กำลังโหลด...
-          </p>
-        ) : filtered.length > 0 ? (
+        {filtered.length > 0 ? (
           filtered.map((user) => (
             <div
               key={user.userID}
@@ -98,7 +103,9 @@ export default function UserHistoryListingPage() {
               </div>
               <button
                 onClick={() =>
-                  router.push(`/admin/view-borrow/user-history/${user.userID}`)
+                  router.push(
+                    `/admin/view-borrow/user-history/${user.userID}`
+                  )
                 }
                 className="mt-auto bg-indigo-500 hover:bg-indigo-600 text-white py-2 rounded-lg transition"
               >

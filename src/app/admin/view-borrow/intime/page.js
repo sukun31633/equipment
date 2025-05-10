@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, ArrowLeft, CheckCircle } from "lucide-react";
+import { Search, ArrowLeft, CheckCircle,Loader2 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import dayjs from "dayjs";
@@ -38,6 +38,14 @@ export default function OverduePage() {
     }
     fetchData();
   }, []);
+
+    if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-200 to-indigo-600">
+        <Loader2 size={64} className="animate-spin text-white" />
+      </div>
+    );
+  }
 
   // กรองเฉพาะ status = Borrowed และตรงกับ searchTerm
   const filteredBorrowRequests = borrowRequests.filter(

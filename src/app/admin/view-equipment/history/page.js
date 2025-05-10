@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 // อย่าลืมติดตั้ง dependencies ด้วย:
 // npm install xlsx file-saver
 import * as XLSX from "xlsx";
@@ -84,6 +84,15 @@ export default function EquipmentHistoryPage() {
     );
   });
 
+  // ← full-screen loader
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <Loader2 size={48} className="animate-spin text-gray-700" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen p-6 bg-gray-100">
       <button
@@ -119,9 +128,7 @@ export default function EquipmentHistoryPage() {
         />
       </div>
 
-      {loading ? (
-        <p>⏳ กำลังโหลด...</p>
-      ) : filteredHistory.length > 0 ? (
+      {filteredHistory.length > 0 ? (
         <div className="overflow-auto bg-white shadow rounded-lg">
           <table className="w-full table-auto">
             <thead className="bg-gray-200 text-left">

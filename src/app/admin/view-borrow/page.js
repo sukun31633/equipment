@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import AdminNavigationBar from "@/app/components/AdminNavigationBar";
 import { motion } from "framer-motion";
 import dayjs from "dayjs";
+import { Loader2 } from "lucide-react";  // ← เพิ่ม Loader2 สำหรับ spinner
 
 const statusMap = {
   Pending: "รออนุมัติ",
@@ -55,6 +56,15 @@ export default function BorrowedEquipmentPage() {
     }
     fetchData();
   }, []);
+
+    // ขณะที่กำลังโหลด แสดง spinner เต็มหน้าจอ
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-500 to-indigo-600">
+        <Loader2 size={64} className="animate-spin text-white" />
+      </div>
+    );
+  }
 
   // รวมข้อมูลจากการยืมและการจอง
   const combinedRequests = [...borrowRequests, ...reservationRequests];

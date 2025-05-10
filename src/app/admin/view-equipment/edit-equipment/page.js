@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Loader2 } from "lucide-react";
 
 export default function EditEquipmentPage() {
   const router = useRouter();
@@ -17,7 +17,6 @@ export default function EditEquipmentPage() {
     location: "",
     description: "",
   });
-
   const [loading, setLoading] = useState(true);
 
   // 🔹 ตัวเลือกหมวดหมู่
@@ -51,7 +50,7 @@ export default function EditEquipmentPage() {
     };
 
     fetchEquipment();
-  }, [id]);
+  }, [id, router]);
 
   const handleChange = (e) => {
     setEquipment({ ...equipment, [e.target.name]: e.target.value });
@@ -79,24 +78,39 @@ export default function EditEquipmentPage() {
     }
   };
 
-  if (loading) return <p className="text-center text-gray-600">⏳ กำลังโหลดข้อมูล...</p>;
+  // ← full-screen loader
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <Loader2 size={48} className="animate-spin text-gray-700" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
       {/* 🔹 Header */}
       <div className="w-full max-w-2xl bg-white p-4 shadow-lg flex items-center justify-between rounded-lg mb-6">
-        <button onClick={() => router.back()} className="text-blue-500 flex items-center">
+        <button
+          onClick={() => router.back()}
+          className="text-blue-500 flex items-center"
+        >
           <ArrowLeft size={24} className="mr-2" /> กลับ
         </button>
         <h2 className="text-lg font-semibold text-gray-800">🛠️ แก้ไขอุปกรณ์</h2>
       </div>
 
       {/* 🔹 Form แก้ไขข้อมูล */}
-      <form onSubmit={handleSubmit} className="w-full max-w-2xl bg-white p-6 shadow-lg rounded-lg">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-2xl bg-white p-6 shadow-lg rounded-lg"
+      >
         <div className="grid grid-cols-1 gap-4">
-          {/* 🔹 ชื่ออุปกรณ์ */}
+          {/* ชื่ออุปกรณ์ */}
           <div>
-            <label className="block text-gray-700 font-medium">📦 ชื่ออุปกรณ์</label>
+            <label className="block text-gray-700 font-medium">
+              📦 ชื่ออุปกรณ์
+            </label>
             <input
               type="text"
               name="name"
@@ -107,9 +121,11 @@ export default function EditEquipmentPage() {
             />
           </div>
 
-          {/* 🔹 ยี่ห้อ */}
+          {/* ยี่ห้อ */}
           <div>
-            <label className="block text-gray-700 font-medium">🏷️ ยี่ห้อ</label>
+            <label className="block text-gray-700 font-medium">
+              🏷️ ยี่ห้อ
+            </label>
             <input
               type="text"
               name="brand"
@@ -119,9 +135,11 @@ export default function EditEquipmentPage() {
             />
           </div>
 
-          {/* 🔹 หมวดหมู่ (Dropdown) */}
+          {/* หมวดหมู่ */}
           <div>
-            <label className="block text-gray-700 font-medium">📂 หมวดหมู่</label>
+            <label className="block text-gray-700 font-medium">
+              📂 หมวดหมู่
+            </label>
             <select
               name="category"
               value={equipment.category}
@@ -136,9 +154,11 @@ export default function EditEquipmentPage() {
             </select>
           </div>
 
-          {/* 🔹 รหัสอุปกรณ์ */}
+          {/* รหัสอุปกรณ์ */}
           <div>
-            <label className="block text-gray-700 font-medium">📦 รหัสอุปกรณ์</label>
+            <label className="block text-gray-700 font-medium">
+              📦 รหัสอุปกรณ์
+            </label>
             <input
               type="text"
               name="equipment_code"
@@ -149,9 +169,11 @@ export default function EditEquipmentPage() {
             />
           </div>
 
-          {/* 🔹 ที่เก็บอุปกรณ์ */}
+          {/* ที่เก็บ */}
           <div>
-            <label className="block text-gray-700 font-medium">📍 ที่เก็บ</label>
+            <label className="block text-gray-700 font-medium">
+              📍 ที่เก็บ
+            </label>
             <input
               type="text"
               name="location"
@@ -161,9 +183,11 @@ export default function EditEquipmentPage() {
             />
           </div>
 
-          {/* 🔹 รายละเอียด */}
+          {/* รายละเอียด */}
           <div>
-            <label className="block text-gray-700 font-medium">📜 รายละเอียด</label>
+            <label className="block text-gray-700 font-medium">
+              📜 รายละเอียด
+            </label>
             <textarea
               name="description"
               value={equipment.description}
@@ -173,20 +197,20 @@ export default function EditEquipmentPage() {
             />
           </div>
 
-          {/* 🔹 ปุ่มบันทึก */}
+          {/* ปุ่มบันทึก */}
           <div className="flex justify-end space-x-4">
             <button
               type="button"
               onClick={() => router.back()}
               className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition"
             >
-               ยกเลิก
+              ยกเลิก
             </button>
             <button
               type="submit"
               className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-600 transition"
             >
-              <Save size={18} className="mr-2" />  บันทึกการเปลี่ยนแปลง
+              <Save size={18} className="mr-2" /> บันทึกการเปลี่ยนแปลง
             </button>
           </div>
         </div>

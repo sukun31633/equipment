@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import AdminNavigationBar from "@/app/components/AdminNavigationBar";
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react'; 
 
 export default function AddEquipmentPage() {
     const [equipmentName, setEquipmentName] = useState("");
@@ -12,7 +13,22 @@ export default function AddEquipmentPage() {
     const [description, setDescription] = useState("");
     const [storageLocation, setStorageLocation] = useState("");
     const [image, setImage] = useState(null);
+    const [loading, setLoading] = useState(true);
     const router = useRouter(); // ใช้ router เพื่อการนำทาง
+
+    // จำลองการโหลดหน้า: ปิด loading หลัง component mount
+    useEffect(() => {
+      setLoading(false);
+    }, []);
+
+    // แสดง spinner เมื่อกำลังโหลดหน้า
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-screen bg-gradient-to-br from-gray-100 to-gray-300">
+          <Loader2 size={64} className="animate-spin text-gray-700" />
+        </div>
+      );
+    }
 
     const handleSave = async () => {
         if (!equipmentName || !equipmentCode || !category) {

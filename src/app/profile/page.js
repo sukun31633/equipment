@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { Switch } from "@headlessui/react";
 import NavigationBar from "../components/NavigationBar";
+import { Loader2 } from "lucide-react";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -70,7 +71,13 @@ export default function ProfilePage() {
   if (status === "loading") {
     return <div className="text-center text-white mt-10">⏳ กำลังโหลดข้อมูล...</div>;
   }
-
+    if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-500 to-indigo-600">
+        <Loader2 size={64} className="animate-spin text-white" />
+      </div>
+    );
+  }
   if (!session) {
     return <div className="text-center text-white mt-10">⚠️ กรุณาเข้าสู่ระบบ</div>;
   }

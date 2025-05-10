@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Search, ArrowLeft } from "lucide-react";
+import { Search,  Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import NavigationBar from "@/app/components/NavigationBar";
 import { motion } from "framer-motion";
@@ -61,6 +61,15 @@ export default function BorrowedEquipmentPage() {
     }
     fetchData();
   }, []);
+
+    // ถ้า loading ให้แสดง spinner เต็มจอ
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-500 to-indigo-600">
+        <Loader2 size={64} className="animate-spin text-white" />
+      </div>
+    );
+  }
 
   // รวมข้อมูลจากการยืมและการจอง
   const combinedRequests = [...borrowRequests, ...reservationRequests];

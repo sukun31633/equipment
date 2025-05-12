@@ -102,7 +102,6 @@ export default function OverduePage() {
 
       {/* แสดงรายการยืมที่เลยกำหนด */}
       <div className="w-full max-w-3xl space-y-4">
-        <h3 className="text-xl font-semibold text-gray-800">📌 รายการยืมที่เลยกำหนด</h3>
         {loading ? (
           <p className="text-center text-gray-600">⏳ กำลังโหลด...</p>
         ) : filteredBorrowRequests.length > 0 ? (
@@ -147,7 +146,6 @@ export default function OverduePage() {
 
       {/* แสดงรายการจองที่เลยกำหนด */}
       <div className="w-full max-w-3xl space-y-4 mt-6">
-        <h3 className="text-xl font-semibold text-gray-800">📌 รายการจองที่เลยกำหนด</h3>
         {loading ? (
           <p className="text-center text-gray-600">⏳ กำลังโหลด...</p>
         ) : filteredReservationRequests.length > 0 ? (

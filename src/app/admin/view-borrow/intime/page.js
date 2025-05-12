@@ -74,7 +74,7 @@ export default function OverduePage() {
           <ArrowLeft size={24} />
         </button>
         <h2 className="text-lg font-semibold text-gray-800">
-          📌 รายการอุปกรณ์ที่ได้รับการยืนยันรับ (Borrowed)
+          ⏰ รายการอุปกรณ์ที่อยู่ในกำหนด
         </h2>
       </motion.div>
 
@@ -94,7 +94,6 @@ export default function OverduePage() {
 
       {/* Borrow Requests */}
       <div className="w-full max-w-3xl space-y-4">
-        <h3 className="text-xl font-semibold text-gray-800">📌 รายการยืม</h3>
         {loading ? (
           <p className="text-center text-gray-600">⏳ กำลังโหลด...</p>
         ) : filteredBorrowRequests.length > 0 ? (
@@ -147,7 +146,6 @@ export default function OverduePage() {
 
       {/* Reservation Requests */}
       <div className="w-full max-w-3xl space-y-4 mt-6">
-        <h3 className="text-xl font-semibold text-gray-800">📌 รายการจอง</h3>
         {loading ? (
           <p className="text-center text-gray-600">⏳ กำลังโหลด...</p>
         ) : filteredReservationRequests.length > 0 ? (

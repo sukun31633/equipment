@@ -109,14 +109,20 @@ export default function ViewStudentPage() {
     router.push("/admin/view-borrow");
   };
 
-  // ฟิลเตอร์รายชื่อนักศึกษาจาก searchTerm
-  const filteredStudents = studentList.filter((student) => {
-    const lowerSearch = searchTerm.toLowerCase();
-    return (
-      student.Name.toLowerCase().includes(lowerSearch) ||
-      student.userID.toLowerCase().includes(lowerSearch)
-    );
-  });
+// เอา lowerSearch ข้างนอก filter
+const lowerSearch = searchTerm.toLowerCase();
+
+const filteredStudents = studentList.filter((student) => {
+  // ป้องกันกรณี Name เป็น undefined
+  const name = (student.Name   || "").toLowerCase();
+  // แปลง userID ให้เป็น string ก่อน แล้ว lowercase
+  const id   = student.userID.toString().toLowerCase();
+
+  return (
+    name.includes(lowerSearch) ||
+    id.includes(lowerSearch)
+  );
+});
 
   // ===== ส่วนของการอัปโหลดไฟล์ Excel =====
   const handleFileChange = (e) => {

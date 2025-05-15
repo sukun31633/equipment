@@ -78,13 +78,19 @@ export default function ViewTeacherPage() {
     }
   };
 
-  const filteredTeachers = teacherList.filter((teacher) => {
-    const lowerSearch = searchTerm.toLowerCase();
-    return (
-      teacher.Name.toLowerCase().includes(lowerSearch) ||
-      teacher.userID.toLowerCase().includes(lowerSearch)
-    );
-  });
+// เอา lowerSearch ข้างนอก filter
+const lowerSearch = searchTerm.toLowerCase();
+
+const filteredTeachers = teacherList.filter((teacher) => {
+  // ป้องกัน undefined, แปลงให้เป็น lowercase
+  const name = (teacher.Name   || "").toLowerCase();
+  const id   = teacher.userID.toString().toLowerCase();
+
+  return (
+    name.includes(lowerSearch) ||
+    id.includes(lowerSearch)
+  );
+});
 
   const handleBack = () => {
     router.push("/admin/view-borrow");

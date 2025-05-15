@@ -68,18 +68,24 @@ export default function BorrowedEquipmentPage() {
 
   // รวมข้อมูลจากการยืมและการจอง
   const combinedRequests = [...borrowRequests, ...reservationRequests];
+const allowedStatuses = ["Pending", "Approved", "Borrowed", "Overdue", "Returned", "Rejected"];
+const lowerSearch = searchTerm.toLowerCase();
+const filteredRequests = combinedRequests.filter((item) => {
+  // เฉพาะสถานะที่ต้องการ
+  if (!allowedStatuses.includes(item.status)) return false;
 
-  // กรองเฉพาะรายการที่มีสถานะเป็น Pending, Approved, Borrowed, Overdue, Returned, Rejected
-  const allowedStatuses = ["Pending", "Approved", "Borrowed", "Overdue", "Returned", "Rejected"];
-  const filteredRequests = combinedRequests.filter((item) =>
-    allowedStatuses.includes(item.status) &&
-    (
-      ((item.borrowerName || item.reserverName) || "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      item.userID.toString().includes(searchTerm)
-    )
+  // เตรียมข้อความสำหรับค้นหา
+  const eqName   = (item.equipmentName   || "").toLowerCase();
+  const userName = (item.borrowerName || item.reserverName || "").toLowerCase();
+  const userId   = item.userID.toString().toLowerCase();
+
+  // ตรวจสอบคำค้นใน 3 ฟิลด์
+  return (
+    eqName.includes(lowerSearch) ||
+    userName.includes(lowerSearch) ||
+    userId.includes(lowerSearch)
   );
+});
 
   // ฟังก์ชันสำหรับลบข้อมูลทั้งหมด (ทั้งตาราง borrowing และ reservation)
   const handleDeleteAll = async () => {
@@ -102,6 +108,7 @@ export default function BorrowedEquipmentPage() {
     }
   };
 
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col items-center p-6 pb-24 w-full">
       {/* Header */}

@@ -87,7 +87,7 @@ export default function AddUserPage() {
       {/* Form Section */}
       <form onSubmit={handleSubmit} className="w-full max-w-4xl bg-white p-6 shadow-md rounded-lg">
         <div className="mb-4">
-          <label className="block text-sm font-semibold mb-1 text-gray-700">ชื่อ</label>
+          <label className="block text-sm font-semibold mb-1 text-gray-700">ชื่อ (นาย,นางสาว)*</label>
           <input
             type="text"
             value={firstName}
@@ -98,7 +98,7 @@ export default function AddUserPage() {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-sm font-semibold mb-1 text-gray-700">นามสกุล</label>
+          <label className="block text-sm font-semibold mb-1 text-gray-700">นามสกุล*</label>
           <input
             type="text"
             value={lastName}
@@ -109,7 +109,7 @@ export default function AddUserPage() {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-sm font-semibold mb-1 text-gray-700">เบอร์โทร</label>
+          <label className="block text-sm font-semibold mb-1 text-gray-700">เบอร์โทร*</label>
           <input
             type="text"
             value={phone}
@@ -120,7 +120,7 @@ export default function AddUserPage() {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-sm font-semibold mb-1 text-gray-700">อีเมล์</label>
+          <label className="block text-sm font-semibold mb-1 text-gray-700">อีเมล์*</label>
           <input
             type="email"
             value={email}
@@ -131,7 +131,7 @@ export default function AddUserPage() {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-sm font-semibold mb-1 text-gray-700">รหัสประจำตัว</label>
+          <label className="block text-sm font-semibold mb-1 text-gray-700">รหัสประจำตัว*</label>
           <input
             type="text"
             value={idNumber}
@@ -143,7 +143,7 @@ export default function AddUserPage() {
         </div>
         {/* Dropdown: ประเภทผู้ใช้งาน */}
         <div className="mb-4">
-          <label className="block text-sm font-semibold mb-1 text-gray-700">ประเภทผู้ใช้งาน</label>
+          <label className="block text-sm font-semibold mb-1 text-gray-700">ประเภทผู้ใช้งาน*</label>
           <select
             value={userType}
             onChange={(e) => setUserType(e.target.value)}
@@ -156,7 +156,7 @@ export default function AddUserPage() {
         </div>
         {/* Input: รหัสผ่าน */}
         <div className="mb-4">
-          <label className="block text-sm font-semibold mb-1 text-gray-700">รหัสผ่าน</label>
+          <label className="block text-sm font-semibold mb-1 text-gray-700">รหัสผ่าน*</label>
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}

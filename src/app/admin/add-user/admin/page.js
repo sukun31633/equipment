@@ -78,13 +78,20 @@ export default function ViewStaffPage() {
     }
   };
 
-  const filteredStaff = staffList.filter((staff) => {
-    const lowerSearch = searchTerm.toLowerCase();
-    return (
-      staff.Name.toLowerCase().includes(lowerSearch) ||
-      staff.userID.toLowerCase().includes(lowerSearch)
-    );
-  });
+// เอา declaration ออกมาข้างนอก filter เพื่อไม่ต้องคำนวณซ้ำ
+const lowerSearch = searchTerm.toLowerCase();
+
+const filteredStaff = staffList.filter((staff) => {
+  // ชื่อเจ้าหน้าที่ (กัน undefined)
+  const name = (staff.Name || "").toLowerCase();
+  // แปลง userID ให้เป็น string ก่อน แล้วค่อย toLowerCase
+  const id   = staff.userID.toString().toLowerCase();
+
+  return (
+    name.includes(lowerSearch) ||
+    id.includes(lowerSearch)
+  );
+});
 
   const handleBack = () => {
     router.push("/admin/view-borrow");

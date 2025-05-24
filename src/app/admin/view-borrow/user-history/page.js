@@ -26,7 +26,7 @@ export default function UserHistoryListingPage() {
     fetchUsers();
   }, []);
 
-  // full-page spinner
+  // full-screen spinner ขณะโหลด
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-gray-50 to-gray-200">
@@ -57,7 +57,7 @@ export default function UserHistoryListingPage() {
       </div>
 
       {/* Search */}
-      <div className="w-full mb-8 flex gap-2">
+      <div className="w-full mb-6 flex gap-2">
         <div className="flex-1 flex items-center bg-white rounded-lg shadow px-4 py-2">
           <Search className="text-gray-400 mr-2" />
           <input
@@ -76,48 +76,55 @@ export default function UserHistoryListingPage() {
         </button>
       </div>
 
-      {/* User Cards */}
-      <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filtered.length > 0 ? (
-          filtered.map((user) => (
-            <div
-              key={user.userID}
-              className="bg-white rounded-2xl shadow-md p-6 flex flex-col hover:shadow-lg transition-transform transform hover:scale-[1.02]"
-            >
-              <div className="flex items-center mb-4">
-                <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xl font-semibold">
-                  {user.Name.charAt(0)}
-                </div>
-                <div className="ml-4">
-                  <p className="text-lg font-medium">{user.Name}</p>
-                  <p className="text-sm text-gray-500">ID: {user.userID}</p>
-                </div>
-              </div>
-              <div className="space-y-1 text-gray-700 mb-4">
-                <p>
-                  <span className="font-medium">อีเมล:</span> {user.email}
-                </p>
-                <p>
-                  <span className="font-medium">โทร:</span> {user.phoneNumber}
-                </p>
-              </div>
-              <button
-                onClick={() =>
-                  router.push(
-                    `/admin/view-borrow/user-history/${user.userID}`
-                  )
-                }
-                className="mt-auto bg-indigo-500 hover:bg-indigo-600 text-white py-2 rounded-lg transition"
-              >
-                ดูประวัติยืมอุปกรณ์
-              </button>
-            </div>
-          ))
-        ) : (
-          <p className="col-span-full text-center text-gray-600">
-            ℹ️ ไม่พบผู้ใช้งาน
-          </p>
-        )}
+      {/* User Table */}
+      <div className="w-full overflow-x-auto bg-white shadow rounded-lg">
+        <table className="min-w-full table-auto">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="px-4 py-2 text-left text-gray-700">ชื่อผู้ใช้</th>
+              <th className="px-4 py-2 text-left text-gray-700">รหัสผู้ใช้งาน</th>
+              <th className="px-4 py-2 text-left text-gray-700">อีเมล</th>
+              <th className="px-4 py-2 text-left text-gray-700">โทรศัพท์</th>
+              <th className="px-4 py-2 text-center text-gray-700">ประวัติ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length > 0 ? (
+              filtered.map((user) => (
+                <tr
+                  key={user.userID}
+                  className="border-b hover:bg-gray-50 transition"
+                >
+                  <td className="px-4 py-3">{user.Name}</td>
+                  <td className="px-4 py-3">{user.userID}</td>
+                  <td className="px-4 py-3">{user.email}</td>
+                  <td className="px-4 py-3">{user.phoneNumber}</td>
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      onClick={() =>
+                        router.push(
+                          `/admin/view-borrow/user-history/${user.userID}`
+                        )
+                      }
+                      className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-1 rounded-lg transition"
+                    >
+                      ดูประวัติ
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td
+                  className="px-4 py-6 text-center text-gray-600"
+                  colSpan={5}
+                >
+                  ℹ️ ไม่พบผู้ใช้งาน
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
